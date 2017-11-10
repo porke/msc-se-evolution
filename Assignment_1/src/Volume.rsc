@@ -36,7 +36,10 @@ list[str] pruneMultilineComments(list[str] lines) {
 int getLinesOfCodeFromFile(loc file) {
 	list[str] lines = [line | line <- readFileLines(file),
 							/^[\s]*$/ !:= line,					// Whitespace lines
-							/^[\s]*[\/]{2,}.*$/ !:= line ];		// Single line comments	
+							/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments	
+							/^.[\s]*(\/*).*(\*\/)$/ !:= line ]; // Single line comments with *
+							
+							
 	return size(pruneMultilineComments(lines));
 }
 
