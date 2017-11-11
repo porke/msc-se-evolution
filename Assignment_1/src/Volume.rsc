@@ -25,20 +25,28 @@ real computeManYears(int totalLinesOfCode) {
 }
 
 list[str] pruneMultilineComments(list[str] lines) {
-	return lines;	
-	// TODO: Finish multiline comment pruning
-	//return for (str line <- lines) {
-	//	if (/^[\s]*[\/*]{1}.*$/ := line) multiLine += 1;
-	//	else if (/^.*[*\/]{1}.*$/ := line) multiLine += 1;		
-	//}
+	list[str] outList = [];
+	bool isComment = false;
+	return for (i <- [0..(size(lines)-1)]){
+		str line = lines[i];
+		if (isComment) {
+			bool isCurrLineCommentEnd = (/^.*(\*\/)[\s]*$/ := line);
+			isComment = !isCurrLineCommentEnd;
+		}
+		else {
+			isComment = (/^[\s]*(\/\*).*$/ := line);
+			if (!isComment) {
+				append line;			
+			}
+		}
+	}
 }
 
 int getLinesOfCodeFromFile(loc file) {
 	list[str] lines = [line | line <- readFileLines(file),
 							/^[\s]*$/ !:= line,					// Whitespace lines
 							/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments	
-							/^.[\s]*(\/*).*(\*\/)$/ !:= line ]; // Single line comments with *
-							
+							/^[\s]*(\/\*).*(\*\/)$/ !:= line ]; // Single line comments with *
 							
 	return size(pruneMultilineComments(lines));
 }
@@ -54,11 +62,9 @@ int computeTotalLinesOfCode(loc projectLocation) {
 	return sum(linesPerFile);
 }
 
-void main() {
-	println("LOC: <getLinesOfCodeFromFile(|project://smallsql0.21/src/smallsql/database/Column.java|)>");	
-	//int totalLinesOfCode = computeTotalLinesOfCode(|project://smallsql0.21/src/smallsql/|);
-	//println("LOC: <totalLinesOfCode>");
-	//println("MY: <round(computeManYears(totalLinesOfCode), 0.01)>");
+void main() {	
+	int totalLinesOfCode = computeTotalLinesOfCode(|project://smallsql0.21/src/smallsql/|);
+	println("LOC: <totalLinesOfCode>");
+	println("MY: <round(computeManYears(totalLinesOfCode), 0.01)>");
 }
-
 
