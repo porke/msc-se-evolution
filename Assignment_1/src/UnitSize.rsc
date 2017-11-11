@@ -1,7 +1,7 @@
 module UnitSize
 
-import IO;
+import Common;
 
-void main() {
-	println("Hello from UnitSize module");
+CodeProperty computeUnitSize(loc project) {
+	return <"UnitSize", []>;
 }

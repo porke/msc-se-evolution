@@ -4,6 +4,8 @@ import IO;
 import List;
 import util::Math;
 
+import Common;
+
 int getStatementsPerFunctionPointForJava() {
 	// Taken from Programming Languages Table
 	return 53;
@@ -62,9 +64,10 @@ int computeTotalLinesOfCode(loc projectLocation) {
 	return sum(linesPerFile);
 }
 
-void main() {	
+CodeProperty computeVolume(loc project) {	
 	int totalLinesOfCode = computeTotalLinesOfCode(|project://smallsql0.21/src/smallsql/|);
-	println("LOC: <totalLinesOfCode>");
-	println("MY: <round(computeManYears(totalLinesOfCode), 0.01)>");
+	real totalManYears = round(computeManYears(totalLinesOfCode), 0.01);	
+	list[Metric] metrics = [<"LOC", totalLinesOfCode>, <"ManYears", totalManYears>];
+	return <"Volume", metrics>;
 }
 

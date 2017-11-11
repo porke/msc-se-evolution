@@ -2,6 +2,8 @@ module Duplication
 
 import IO;
 
-void main() {
-	println("Hello from Duplication module");
+import Common;
+
+CodeProperty computeDuplication(loc project) {
+	return <"Duplication", []>;
 }
