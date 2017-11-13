@@ -12,20 +12,20 @@ import Common;
 alias ClassAst = tuple[loc className, list[loc] methods, Declaration ast];
 alias MethodComplexity = tuple[loc method, int complexity];
 
-int computeCyclomaticComplexity(loc method, Declaration classAst) {
+int computeCyclomaticComplexity(loc method, Declaration fileAst) {
 	if (method !:= |java+method:///smallsql/database/Command/verifyParams()|) {
 		return 0;
 	}
 	
 	str className = method.parent.file;		
-	visit(classAst) {
+	visit(fileAst) {
 		// Find the class in the file
 		case compilationUnit(_, [*_, class(className, _, _, classBody), *_]): {
 			// Extract the method nae from the uri
 			if (/^<methodName:.*>(\(.*\))$/ := method.file) {
 				// Find the method in the file
-				if ([*_, method(_, methodName, _, _, methodImplementation), *_] := classBody) {
-					//text(methodImplementation);
+				if ([*_, method(_, methodName, _, _, methodAst), *_] := classBody) {
+					//text(methodAst);
 					// Match if statements
 					// \if(Expression condition, Statement thenBranch)
 					//| \if(Expression condition, Statement thenBranch, Statement elseBranch)

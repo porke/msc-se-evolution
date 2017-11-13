@@ -26,37 +26,7 @@ real computeManYears(int totalLinesOfCode) {
 	return toReal(computeTheNumberOfFunctionPoints(totalLinesOfCode)) / getProductivityAveragePerStaffYearForJava();
 }
 
-list[str] pruneMultilineComments(list[str] lines) {
-	list[str] outList = [];
-	bool isComment = false;
-	return for (i <- [0..(size(lines)-1)]){
-		str line = lines[i];
-		if (isComment) {
-			bool isCurrLineCommentEnd = (/^.*(\*\/)[\s]*$/ := line);
-			isComment = !isCurrLineCommentEnd;
-		}
-		else {
-			isComment = (/^[\s]*(\/\*).*$/ := line);
-			if (!isComment) {
-				append line;			
-			}
-		}
-	}
-}
-
-list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
-	return [line | line <- lines,
-			/^[\s]*$/ !:= line,					// Whitespace lines
-			/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments	
-			/^[\s]*(\/\*).*(\*\/)$/ !:= line ]; // Single line comments with *
-}
-
-int getLinesOfCodeFromLocation(loc file) {
-	list[str] lines = pruneWhitespaceAndSingleLineComments(readFileLines(file));
-	return size(pruneMultilineComments(lines));
-}
-
-list[loc] getSourceFilesFromDirRecursively(loc directory) {	
+list[loc] getSourceFilesFromDirRecursively(loc directory) {
 	list[loc] sourceFiles = [directory + s | s <- listEntries(directory), isFile(directory + s)];
 	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];
 	return sourceFiles + [*getSourceFilesFromDirRecursively(d) | d <- subDirectories];
@@ -69,8 +39,11 @@ int computeTotalLinesOfCode(loc projectLocation) {
 
 CodeProperty computeVolume(loc project) {	
 	int totalLinesOfCode = computeTotalLinesOfCode(|project://smallsql0.21/src/smallsql/|);
-	real totalManYears = round(computeManYears(totalLinesOfCode), 0.01);	
-	list[Metric] metrics = [<"LOC", totalLinesOfCode>, <"ManYears", totalManYears>];
-	return <"Volume", metrics>;
+	real totalManYears = round(computeManYears(totalLinesOfCode), 0.01);		
+	return <"Volume", [<"LOC", totalLinesOfCode>, <"ManYears", totalManYears>]>;
 }
 
+void main() {
+	loc project0 = |project://smallsql0.21/|;
+	iprintln(computeVolume(project0));
+}
