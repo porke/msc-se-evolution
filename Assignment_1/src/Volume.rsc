@@ -44,12 +44,15 @@ list[str] pruneMultilineComments(list[str] lines) {
 	}
 }
 
-int getLinesOfCodeFromFile(loc file) {
-	list[str] lines = [line | line <- readFileLines(file),
-							/^[\s]*$/ !:= line,					// Whitespace lines
-							/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments	
-							/^[\s]*(\/\*).*(\*\/)$/ !:= line ]; // Single line comments with *
-							
+list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
+	return [line | line <- lines,
+			/^[\s]*$/ !:= line,					// Whitespace lines
+			/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments	
+			/^[\s]*(\/\*).*(\*\/)$/ !:= line ]; // Single line comments with *
+}
+
+int getLinesOfCodeFromLocation(loc file) {
+	list[str] lines = pruneWhitespaceAndSingleLineComments(readFileLines(file));
 	return size(pruneMultilineComments(lines));
 }
 
@@ -60,7 +63,7 @@ list[loc] getSourceFilesFromDirRecursively(loc directory) {
 }
 
 int computeTotalLinesOfCode(loc projectLocation) {
-	list[int] linesPerFile = [getLinesOfCodeFromFile(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
+	list[int] linesPerFile = [getLinesOfCodeFromLocation(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
 	return sum(linesPerFile);
 }
 

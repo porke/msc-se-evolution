@@ -2,13 +2,14 @@ module MaintainabilityModel
 
 import util::Math;
 import List;
+import util::ValueUI;
+import IO;
 
 import Common;
 import Duplication;
 import Volume;
 import UnitComplexity;
 import UnitSize;
-import IO;
 
 alias SystemProperty = tuple[str name, list[CodePropertyEvaluation] properties];
 alias CodePropertyEvaluation = tuple[CodeProperty property, Quality (CodeProperty) evaluationFunc];
@@ -60,6 +61,10 @@ void computeModel(loc project) {
 	list[CodePropertyEvaluation] codeProperties = computeCodeProperties(project);
 	list[SystemProperty] systemProperties = createSystemProperties(codeProperties);
 	iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);	
-	
 	// TODO: visualize the model?
+}
+
+void computeModel() {
+	loc project0 = |project://smallsql0.21/|;
+	computeModel(project0);
 }
