@@ -9,7 +9,7 @@ alias CodeProperty = tuple[str name, list[Metric] metrics];
 list[str] pruneMultilineComments(list[str] lines) {
 	list[str] outList = [];
 	bool isComment = false;
-	return for (i <- [0..(size(lines)-1)]){
+	return for (i <- [0..(size(lines))]){
 		str line = lines[i];
 		if (isComment) {
 			bool isCurrLineCommentEnd = (/^.*(\*\/)[\s]*$/ := line);
