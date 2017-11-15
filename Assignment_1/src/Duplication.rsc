@@ -16,7 +16,7 @@ import UnitSize;
 map[num, set[loc]] listByLength(){
 	methodList = getMethodList(|project://smallsql0.21/|); //Retrieves list from UnitSize.
 	//saves all locations in tuples of (LOC, Location);
-	list[tuple[num val, loc name]] sizesDupl = [<size(readFileLines(method)),method> | method <- methodList];
+	list[tuple[num val, loc name]] sizesDupl = [<size(pruneMultilineComments(pruneWhitespaceAndSingleLineComments(readFileLines(method)))),method> | method <- methodList];
 	
 	//use sort(domain(sizesDupl)); to get a sorted set of the domain to use for matching. 
 	
