@@ -1,5 +1,7 @@
 module Common
 
+import util::ValueUI;
+
 import IO;
 import List;
 
@@ -9,7 +11,7 @@ alias CodeProperty = tuple[str name, list[Metric] metrics];
 list[str] pruneMultilineComments(list[str] lines) {
 	list[str] outList = [];
 	bool isComment = false;
-	return for (i <- [0..(size(lines)-1)]){
+	return for (i <- [0..(size(lines))]){
 		str line = lines[i];
 		if (isComment) {
 			bool isCurrLineCommentEnd = (/^.*(\*\/)[\s]*$/ := line);
@@ -32,6 +34,9 @@ list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
 }
 
 int getLinesOfCodeFromLocation(loc file) {
-	list[str] lines = pruneWhitespaceAndSingleLineComments(readFileLines(file));
-	return size(pruneMultilineComments(lines));
+	list[str] totalLines = readFileLines(file);
+	list[str] lines = pruneWhitespaceAndSingleLineComments(totalLines);
+	list[str] physicalCodeLines = pruneMultilineComments(lines); 
+	//iprintln(totalLines - physicalCodeLines);
+	return size(physicalCodeLines);
 }

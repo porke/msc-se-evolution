@@ -19,12 +19,19 @@ Quality MinQuality = 1;
 Quality MaxQuality = 5;
 
 Quality getVolumeQuality(CodeProperty volume) {
-	// TODO: usage table to grade
-	return MinQuality;
+	list[int] thresholds = [66, 246, 665, 1310];
+	num linesOfCodeInThousands = volume.metrics[0].val / 1000;
+	list[int] finalMetric = [x | x <- thresholds, linesOfCodeInThousands < x];	
+	return size(finalMetric) + 1;
 }
 
 Quality getUnitSizeQuality(CodeProperty unitSize) {
 	// TODO: usage table to grade
+	// Classification derived from Better Code hub because it is not in the paper:
+	// 60+ lines -> very high risk 
+	// 30+ lines -> high risk
+	// 15+ lines -> medium risk
+	// less than 15 lines -> low risk 
 	return MinQuality;
 }
 
@@ -60,7 +67,7 @@ Quality getSystemPropertyQuality(SystemProperty prop) {
 void computeModel(loc project) {
 	list[CodePropertyEvaluation] codeProperties = computeCodeProperties(project);
 	list[SystemProperty] systemProperties = createSystemProperties(codeProperties);
-	iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);	
+	//iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
 	// TODO: visualize the model?
 }
 
