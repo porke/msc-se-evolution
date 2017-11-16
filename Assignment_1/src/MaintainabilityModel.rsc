@@ -2,6 +2,7 @@ module MaintainabilityModel
 
 import util::Math;
 import List;
+import Relation;
 import util::ValueUI;
 import IO;
 
@@ -29,20 +30,22 @@ Quality getVolumeQuality(CodeProperty volume) {
 }
 
 Quality getUnitSizeQuality(CodeProperty unitSize) {
-	// Classification derived from Better Code hub because it is not in the paper
+	// Classification derived from Better Code Hub because it is not in the paper
 	list[int] lineThresholds = [15, 30, 60];
 	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);
 	
-	// TODO: 
-	// 1. classify the functions by risk category depending on the threshold
-	rel[int, int] linecountByThreshold = {<getThresholdRank(m.val), m.val> | m <- unitSize.metrics};
-	// 2. make a rel[threshold, linecount]
-	//rel[int, int] aggregatedLineByThreshold = {domain(linecountByThreshold)
-	// 3. collapse the relation by aggregating the threshold values so that we get
-	// 4. transform the aggregated rel to a list of percentages (size categories) 
-	list[real] sizeCategories = [0.12, 0.023, 0.02, 0.122];			// Test data
+	rel[int, int] lineCountByThreshold = {<getThresholdRank(m.val, lineThresholds), toInt(m.val)> | m <- unitSize.metrics};	
+	rel[int, int] aggregatedLineCounts = {<threshold, sum(lineCountByThreshold[threshold])> | threshold <- domain(lineCountByThreshold)};	
+	list[real] sizeCategories = [sum(aggregatedLineCounts[rank]) / toReal(totalLinesOfCode) | rank <- [0..size(lineThresholds)]];
+	iprintln(sizeCategories);
+	list[real] relativeSizeThresholds_Moderate = [0.25, 0.3, 0.4, 0.5];
+	list[real] relativeSizeThresholds_High = [0.0, 0.01, 0.1, 0.15];
+	list[real] relativeSizeThresholds_VeryHigh = [0.0, 0.0, 0.0, 0.05];
+	list[int] qualitiesPerSizeCategory = [getThresholdRank(sizeCategories[1], relativeSizeThresholds_Moderate),
+										  getThresholdRank(sizeCategories[2], relativeSizeThresholds_High),
+									      getThresholdRank(sizeCategories[3], relativeSizeThresholds_VeryHigh)];
 	
-	return MinQuality;
+	return min(qualitiesPerSizeCategory);
 }
 
 Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
@@ -50,20 +53,18 @@ Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 	list[int] riskThresholds = [1, 11, 21, 51];
 	
 	// risk thresholds wrt quality ratings
-	// TODO: classify the 
 	list[real] riskCategories = [0.45, 0.023, 0.02, 0.122];		// Test data
+	
 	list[real] relativeRiskThresholds_Moderate = [0.25, 0.3, 0.4, 0.5];
 	list[real] relativeRiskThresholds_High = [0.0, 0.01, 0.1, 0.15];
 	list[real] relativeRiskThresholds_VeryHigh = [0.0, 0.0, 0.0, 0.05];
 	list[int] qualitiesPerRiskCategory = [getThresholdRank(riskCategories[1], relativeRiskThresholds_Moderate),
 										  getThresholdRank(riskCategories[2], relativeRiskThresholds_High),
 									      getThresholdRank(riskCategories[3], relativeRiskThresholds_VeryHigh)];
-	
 	return min(qualitiesPerRiskCategory);
 }
 
 Quality getDuplicationQuality(CodeProperty duplication) {
-	// TODO: usage table to grade
 	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
 	real duplicationPercentage = 0.12;	// Test data
 	return getThresholdRank(duplicationPercentage, thresholds);
@@ -77,7 +78,6 @@ list[CodePropertyEvaluation] computeCodeProperties(loc project) {
 }
 
 list[SystemProperty] createSystemProperties(list[CodePropertyEvaluation] props) {
-	SystemProperty stability = <"Stability", []>;
 	SystemProperty analysability = <"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>;
 	SystemProperty testability = <"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>;
 	SystemProperty changeability = <"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>;
@@ -91,11 +91,19 @@ Quality getSystemPropertyQuality(SystemProperty prop) {
 void computeModel(loc project) {
 	list[CodePropertyEvaluation] codeProperties = computeCodeProperties(project);
 	list[SystemProperty] systemProperties = createSystemProperties(codeProperties);
-	//iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
+	iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
 	// TODO: visualize the model?
 }
+
+//////////////////////////////////////////////////
+// Test code
+//////////////////////////////////////////////////
 
 void computeModel() {
 	loc project0 = |project://smallsql0.21/|;
 	computeModel(project0);
+}
+
+void computeUnitSizeModel() {
+
 }
