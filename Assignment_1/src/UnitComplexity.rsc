@@ -18,23 +18,21 @@ int computeCyclomaticComplexity(loc method, Declaration fileAst) {
 	}
 	
 	int complexity = 0;
-	str className = method.parent.file;		
-	visit(fileAst) {
-		// Find the class in the file
-		case compilationUnit(_, [*_, class(className, _, _, classBody), *_]): {
-			// Extract the method nae from the uri
-			if (/^<methodName:.*>(\(.*\))$/ := method.file) {
-				// Find the method in the file
-				if ([*_, method(_, methodName, _, _, methodAst), *_] := classBody) {
-					switch (methodAst) {
-						case block([*_, b, *_]): {complexity = complexity + 1; text(b);}
-					}
-				}
+	str className = method.parent.file;
+	
+	// Extract the method name from the uri
+	if (/^<methodName:.*>(\(.*\))$/ := method.file) {
+		visit(fileAst) {
+			// Find the class and the method in the file
+			case compilationUnit(_, [*_, class(className, _, _, [*_, method(_, methodName, _, _, methodBody), *_]), *_]): {
+				fors = [f.src | /Statement f:\for(_,_,_,_) := methodBody];
+				ifs = [f.src | /Statement f:\if(_,_) := methodBody];
+				iprintln(fors+ifs);
+				return 123;	
 			}
 		}
 	}
-		
-	println(complexity);
+	
 	return complexity;
 }
 

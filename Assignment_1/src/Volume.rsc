@@ -38,12 +38,12 @@ int computeTotalLinesOfCode(loc projectLocation) {
 }
 
 CodeProperty computeVolume(loc project) {	
-	int totalLinesOfCode = computeTotalLinesOfCode(|project://smallsql0.21/src/smallsql/|);
+	int totalLinesOfCode = computeTotalLinesOfCode(project);
 	real totalManYears = round(computeManYears(totalLinesOfCode), 0.01);		
 	return <"Volume", [<"LOC", totalLinesOfCode>, <"ManYears", totalManYears>]>;
 }
 
 void main() {
-	loc project0 = |project://smallsql0.21/|;
+	loc project0 = |project://smallsql0.21/src/|;
 	iprintln(computeVolume(project0));
 }

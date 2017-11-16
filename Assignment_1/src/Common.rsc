@@ -37,6 +37,5 @@ int getLinesOfCodeFromLocation(loc file) {
 	list[str] totalLines = readFileLines(file);
 	list[str] lines = pruneWhitespaceAndSingleLineComments(totalLines);
 	list[str] physicalCodeLines = pruneMultilineComments(lines); 
-	//iprintln(totalLines - physicalCodeLines);
 	return size(physicalCodeLines);
 }
