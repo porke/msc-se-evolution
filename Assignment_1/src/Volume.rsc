@@ -28,7 +28,7 @@ real computeManYears(int totalLinesOfCode) {
 
 list[loc] getSourceFilesFromDirRecursively(loc directory) {
 	list[loc] sourceFiles = [directory + s | s <- listEntries(directory), isFile(directory + s)];
-	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];
+	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];	
 	return sourceFiles + [*getSourceFilesFromDirRecursively(d) | d <- subDirectories];
 }
 

@@ -17,6 +17,7 @@ int computeCyclomaticComplexity(loc method, Declaration fileAst) {
 		return 0;
 	}
 	
+	int complexity = 0;
 	str className = method.parent.file;		
 	visit(fileAst) {
 		// Find the class in the file
@@ -25,16 +26,16 @@ int computeCyclomaticComplexity(loc method, Declaration fileAst) {
 			if (/^<methodName:.*>(\(.*\))$/ := method.file) {
 				// Find the method in the file
 				if ([*_, method(_, methodName, _, _, methodAst), *_] := classBody) {
-					//text(methodAst);
-					// Match if statements
-					// \if(Expression condition, Statement thenBranch)
-					//| \if(Expression condition, Statement thenBranch, Statement elseBranch)
-					return 111;
+					switch (methodAst) {
+						case block([*_, b, *_]): {complexity = complexity + 1; text(b);}
+					}
 				}
 			}
 		}
 	}
-	return 666;
+		
+	println(complexity);
+	return complexity;
 }
 
 void main() {
