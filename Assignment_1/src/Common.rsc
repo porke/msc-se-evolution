@@ -28,7 +28,7 @@ list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
 	return [line | line <- lines,
 			/^[\s]*$/ !:= line,					// Whitespace lines
 			/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments
-			/^[\s]*(\/\*).*(\*\/)$/ !:= line ]; // Single line comments with *
+			/^[\s]*(\/\*).*(\*\/)[\s]*$/ !:= line ]; // Single line comments with *
 }
 
 int getLinesOfCodeFromLocation(loc file) {
