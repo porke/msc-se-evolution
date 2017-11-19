@@ -4,8 +4,9 @@ import util::Math;
 import List;
 import Set;
 import Relation;
-import util::ValueUI;
 import IO;
+import vis::Render;
+import vis::Figure;
 
 import Common;
 import Duplication;
@@ -15,6 +16,7 @@ import UnitSize;
 
 alias SystemProperty = tuple[str name, list[CodePropertyEvaluation] properties];
 alias CodePropertyEvaluation = tuple[CodeProperty property, Quality (CodeProperty) evaluationFunc];
+alias MaintainabilityModel = list[SystemProperty];
 alias Quality = int;
 
 Quality MinQuality = 1;
@@ -63,7 +65,7 @@ Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 	list[int] riskThresholds = [11, 21, 51];
 	int totalLinesOfCode = sum([toInt(x) | x <- unitComplexity.metrics.val]); 	// Test data
 	list[list[real]] relativeRiskThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
-	return getQualityForThresholds([m.val | m <- unitSize.metrics],
+	return getQualityForThresholds([m.val | m <- unitComplexity.metrics],
 									riskThresholds,
 									relativeRiskThresholds,
 									totalLinesOfCode);	
@@ -83,7 +85,7 @@ list[CodePropertyEvaluation] computeCodeProperties(loc project) {
 			<computeDuplication(project), getDuplicationQuality>];
 }
 
-list[SystemProperty] createSystemProperties(list[CodePropertyEvaluation] props) {
+MaintainabilityModel createMaintainabilityModel(list[CodePropertyEvaluation] props) {
 	SystemProperty analysability = <"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>;
 	SystemProperty testability = <"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>;
 	SystemProperty changeability = <"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>;
@@ -96,14 +98,35 @@ Quality getSystemPropertyQuality(SystemProperty prop) {
 
 void computeModel(loc project) {
 	list[CodePropertyEvaluation] codeProperties = computeCodeProperties(project);
-	list[SystemProperty] systemProperties = createSystemProperties(codeProperties);
-	iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
-	// TODO: visualize the model?
+	MaintainabilityModel systemProperties = createMaintainabilityModel(codeProperties);
+	//iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
+	renderModel(systemProperties);
+}
+
+//////////////////////////////////////////////////
+// Visualization code
+//////////////////////////////////////////////////
+void renderModel(MaintainabilityModel model) {
+	Figure modelFigure = tree(box(text("Model"), fillColor("grey")), [renderSystemProperty(p) | p <- model], std(gap(20)));
+	render(modelFigure);
+}
+
+Figure renderSystemProperty(SystemProperty prop) {
+	return tree(ellipse(text(prop.name)), [renderCodeProperty(c) | c <- prop.properties]);
+}
+
+Figure renderCodeProperty(CodePropertyEvaluation prop) {
+	return box(text(prop.property.name));
 }
 
 //////////////////////////////////////////////////
 // Test code
 //////////////////////////////////////////////////
+
+void renderTest() {
+	MaintainabilityModel model = createMaintainabilityModel([<<"Volume", [<"LOC", 111>, <"ManYears", 123>]>, getVolumeQuality>]);
+	renderModel(model);
+}
 
 void computeModel() {
 	loc project = |project://smallsql0.21/|;
