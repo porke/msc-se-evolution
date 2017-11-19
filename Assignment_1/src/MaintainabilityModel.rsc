@@ -43,36 +43,36 @@ Quality getUnitSizeQuality(CodeProperty unitSize) {
 	list[tuple[int rank, int lines]] lineCountByThreshold = [<1 + maxRank - getThresholdRank(m.val, lineThresholds), toInt(m.val)> | m <- unitSize.metrics];	
 	rel[int, num] aggregatedLineCounts = {<threshold, sum([x.lines | x <- lineCountByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
 	// Map the aggregated line counts to percentages of code in each categories	
-	list[real] sizeCategories = [toReal(sum({0r} + aggregatedLineCounts[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
+	list[real] sizeCategories = [toReal(sum(aggregatedLineCounts[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
 	
-	list[real] relativeSizeThresholds_Moderate = [0.25, 0.3, 0.4, 0.5];
-	list[real] relativeSizeThresholds_High = [0.0, 0.01, 0.1, 0.15];
-	list[real] relativeSizeThresholds_VeryHigh = [0.0, 0.0, 0.0, 0.05];
-	list[int] qualitiesPerSizeCategory = [getThresholdRank(sizeCategories[1], relativeSizeThresholds_Moderate),
-										  getThresholdRank(sizeCategories[2], relativeSizeThresholds_High),
-									      getThresholdRank(sizeCategories[3], relativeSizeThresholds_VeryHigh)];
+	// Thresholds for low, medium, high and very high risk code 
+	list[list[real]] relativeSizeThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
+	list[int] qualitiesPerSizeCategory = [getThresholdRank(sizeCategories[x - 1], relativeSizeThresholds[x - 1]) | x <- thresholdRanks];    
 	return min(qualitiesPerSizeCategory);
 }
 
 Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 	// risk wrt CC: low, moderate, high, very high
-	list[int] riskThresholds = [1, 11, 21, 51];
+	list[int] riskThresholds = [11, 21, 51];
+	int totalLinesOfCode = sum([toInt(x) | x <- unitComplexity.metrics.val]); 	// Test data
 	
-	// risk thresholds wrt quality ratings
-	list[real] riskCategories = [0.45, 0.023, 0.02, 0.122];		// Test data
-	
-	list[real] relativeRiskThresholds_Moderate = [0.25, 0.3, 0.4, 0.5];
-	list[real] relativeRiskThresholds_High = [0.0, 0.01, 0.1, 0.15];
-	list[real] relativeRiskThresholds_VeryHigh = [0.0, 0.0, 0.0, 0.05];
-	list[int] qualitiesPerRiskCategory = [getThresholdRank(riskCategories[1], relativeRiskThresholds_Moderate),
-										  getThresholdRank(riskCategories[2], relativeRiskThresholds_High),
-									      getThresholdRank(riskCategories[3], relativeRiskThresholds_VeryHigh)];
+	// Risk thresholds wrt quality ratings
+	// 1 - low risk, 4 - very high risk
+	int minRank = 1;
+	int maxRank = 4;
+	list[int] thresholdRanks = [minRank..(maxRank+1)];
+	list[tuple[int rank, int complexity]] complexityByThreshold = [<1 + maxRank - getThresholdRank(m.val, riskThresholds), toInt(m.val)> | m <- unitComplexity.metrics];
+	rel[int, num] aggregatedComplexities = {<threshold, sum([x.complexity | x <- complexityByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
+	list[real] riskCategories = [toReal(sum(aggregatedComplexities[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
+	list[list[real]] relativeRiskThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
+	list[int] qualitiesPerRiskCategory = [getThresholdRank(riskCategories[x - 1], relativeRiskThresholds[x - 1]) | x <- thresholdRanks];	
 	return min(qualitiesPerRiskCategory);
 }
 
 Quality getDuplicationQuality(CodeProperty duplication) {
 	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
-	real duplicationPercentage = 0.12;	// Test data
+	int totalLinesOfCode = 12345; 	// Test data
+	real duplicationPercentage = duplication.metrics[0].val / totalLinesOfCode;
 	return getThresholdRank(duplicationPercentage, thresholds);
 }
 
@@ -120,4 +120,10 @@ void computeVolumeQuality() {
 	loc project = |project://smallsql0.21/|;
 	CodeProperty property = computeVolume(project); 
 	iprintln(getVolumeQuality(property));
+}
+
+void computeUnitComplexityQuality() {
+	loc project = |project://smallsql0.21/|;
+	CodeProperty property = computeUnitComplexity(project); 
+	iprintln(getUnitComplexityQuality(property));
 }
