@@ -2,6 +2,7 @@ module MaintainabilityModel
 
 import util::Math;
 import List;
+import Set;
 import Relation;
 import util::ValueUI;
 import IO;
@@ -20,31 +21,36 @@ Quality MinQuality = 1;
 Quality MaxQuality = 5;
 
 int getThresholdRank(num valueRanked, list[num] thresholds) {
-	return size([x | x <- thresholds, valueRanked < x]) + 1;
+	return size([x | x <- thresholds, valueRanked <= x]) + 1;
 }
 
 Quality getVolumeQuality(CodeProperty volume) {
 	list[int] thresholds = [66, 246, 665, 1310];
-	num linesOfCodeInThousands = volume.metrics[0].val / 1000;
+	num linesOfCodeInThousands = volume.metrics[0].val / 1000;	
 	return getThresholdRank(linesOfCodeInThousands, thresholds);
 }
 
 Quality getUnitSizeQuality(CodeProperty unitSize) {
 	// Classification derived from Better Code Hub because it is not in the paper
-	list[int] lineThresholds = [15, 30, 60];
-	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);
+	list[int] lineThresholds = [15, 30, 60];	
+	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);	
 	
-	rel[int, int] lineCountByThreshold = {<getThresholdRank(m.val, lineThresholds), toInt(m.val)> | m <- unitSize.metrics};	
-	rel[int, int] aggregatedLineCounts = {<threshold, sum(lineCountByThreshold[threshold])> | threshold <- domain(lineCountByThreshold)};	
-	list[real] sizeCategories = [sum(aggregatedLineCounts[rank]) / toReal(totalLinesOfCode) | rank <- [0..size(lineThresholds)]];
-	iprintln(sizeCategories);
+	// Mapping the line counts to risk categories where
+	// 1 - low risk, 4 - very high risk
+	int minRank = 1;
+	int maxRank = 4;
+	list[int] thresholdRanks = [minRank..(maxRank+1)];
+	list[tuple[int rank, int lines]] lineCountByThreshold = [<1 + maxRank - getThresholdRank(m.val, lineThresholds), toInt(m.val)> | m <- unitSize.metrics];	
+	rel[int, num] aggregatedLineCounts = {<threshold, sum([x.lines | x <- lineCountByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
+	// Map the aggregated line counts to percentages of code in each categories	
+	list[real] sizeCategories = [toReal(sum({0r} + aggregatedLineCounts[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
+	
 	list[real] relativeSizeThresholds_Moderate = [0.25, 0.3, 0.4, 0.5];
 	list[real] relativeSizeThresholds_High = [0.0, 0.01, 0.1, 0.15];
 	list[real] relativeSizeThresholds_VeryHigh = [0.0, 0.0, 0.0, 0.05];
 	list[int] qualitiesPerSizeCategory = [getThresholdRank(sizeCategories[1], relativeSizeThresholds_Moderate),
 										  getThresholdRank(sizeCategories[2], relativeSizeThresholds_High),
 									      getThresholdRank(sizeCategories[3], relativeSizeThresholds_VeryHigh)];
-	
 	return min(qualitiesPerSizeCategory);
 }
 
@@ -81,7 +87,7 @@ list[SystemProperty] createSystemProperties(list[CodePropertyEvaluation] props) 
 	SystemProperty analysability = <"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>;
 	SystemProperty testability = <"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>;
 	SystemProperty changeability = <"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>;
-	return [stability, analysability, testability, changeability];
+	return [analysability, testability, changeability];
 }
 
 Quality getSystemPropertyQuality(SystemProperty prop) {
@@ -100,10 +106,18 @@ void computeModel(loc project) {
 //////////////////////////////////////////////////
 
 void computeModel() {
-	loc project0 = |project://smallsql0.21/|;
-	computeModel(project0);
+	loc project = |project://smallsql0.21/|;
+	computeModel(project);
 }
 
-void computeUnitSizeModel() {
+void computeUnitSizeQuality() {
+	loc project = |project://smallsql0.21/|;
+	CodeProperty property = computeUnitSize(project); 
+	iprintln(getUnitSizeQuality(property));
+}
 
+void computeVolumeQuality() {
+	loc project = |project://smallsql0.21/|;
+	CodeProperty property = computeVolume(project); 
+	iprintln(getVolumeQuality(property));
 }
