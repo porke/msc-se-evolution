@@ -30,49 +30,49 @@ Quality getVolumeQuality(CodeProperty volume) {
 	return getThresholdRank(linesOfCodeInThousands, thresholds);
 }
 
+Quality getQualityForThresholds(list[num] metricValues,
+							   	list[int] thresholdValues,
+							   	list[list[real]] categoryThresholds,
+								int totalValue) {
+	int minRank = 1;
+	int maxRank = size(thresholdValues) + 1;
+	list[int] thresholdRanks = [minRank..(maxRank+1)];
+	
+	list[tuple[int rank, int lines]] valueByThreshold = [<1 + maxRank - getThresholdRank(m, thresholdValues), toInt(m)> | m <- metricValues];	
+	rel[int, num] aggregatedValueCounts = {<threshold, sum([x.lines | x <- valueByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
+	// Map the aggregated values to percentages of code in each categories	
+	list[real] valueCategories = [toReal(sum(aggregatedValueCounts[rank])) / toReal(totalValue) | rank <- thresholdRanks];	
+	// Thresholds for low, medium, high and very high risk code 	
+	list[int] qualitiesPerSizeCategory = [getThresholdRank(valueCategories[x - 1], categoryThresholds[x - 1]) | x <- thresholdRanks];    
+	return min(qualitiesPerSizeCategory);
+}
+
 Quality getUnitSizeQuality(CodeProperty unitSize) {
 	// Classification derived from Better Code Hub because it is not in the paper
 	list[int] lineThresholds = [15, 30, 60];	
 	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);	
-	
-	// Mapping the line counts to risk categories where
-	// 1 - low risk, 4 - very high risk
-	int minRank = 1;
-	int maxRank = 4;
-	list[int] thresholdRanks = [minRank..(maxRank+1)];
-	list[tuple[int rank, int lines]] lineCountByThreshold = [<1 + maxRank - getThresholdRank(m.val, lineThresholds), toInt(m.val)> | m <- unitSize.metrics];	
-	rel[int, num] aggregatedLineCounts = {<threshold, sum([x.lines | x <- lineCountByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
-	// Map the aggregated line counts to percentages of code in each categories	
-	list[real] sizeCategories = [toReal(sum(aggregatedLineCounts[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
-	
-	// Thresholds for low, medium, high and very high risk code 
 	list[list[real]] relativeSizeThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
-	list[int] qualitiesPerSizeCategory = [getThresholdRank(sizeCategories[x - 1], relativeSizeThresholds[x - 1]) | x <- thresholdRanks];    
-	return min(qualitiesPerSizeCategory);
+	return getQualityForThresholds([m.val | m <- unitSize.metrics],
+									lineThresholds,
+									relativeSizeThresholds,
+									totalLinesOfCode);	
 }
 
 Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
-	// risk wrt CC: low, moderate, high, very high
+	// Risk wrt CC: low, moderate, high, very high
 	list[int] riskThresholds = [11, 21, 51];
 	int totalLinesOfCode = sum([toInt(x) | x <- unitComplexity.metrics.val]); 	// Test data
-	
-	// Risk thresholds wrt quality ratings
-	// 1 - low risk, 4 - very high risk
-	int minRank = 1;
-	int maxRank = 4;
-	list[int] thresholdRanks = [minRank..(maxRank+1)];
-	list[tuple[int rank, int complexity]] complexityByThreshold = [<1 + maxRank - getThresholdRank(m.val, riskThresholds), toInt(m.val)> | m <- unitComplexity.metrics];
-	rel[int, num] aggregatedComplexities = {<threshold, sum([x.complexity | x <- complexityByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};	
-	list[real] riskCategories = [toReal(sum(aggregatedComplexities[rank])) / toReal(totalLinesOfCode) | rank <- thresholdRanks];
 	list[list[real]] relativeRiskThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
-	list[int] qualitiesPerRiskCategory = [getThresholdRank(riskCategories[x - 1], relativeRiskThresholds[x - 1]) | x <- thresholdRanks];	
-	return min(qualitiesPerRiskCategory);
+	return getQualityForThresholds([m.val | m <- unitSize.metrics],
+									riskThresholds,
+									relativeRiskThresholds,
+									totalLinesOfCode);	
 }
 
 Quality getDuplicationQuality(CodeProperty duplication) {
 	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
 	int totalLinesOfCode = 12345; 	// Test data
-	real duplicationPercentage = duplication.metrics[0].val / totalLinesOfCode;
+	num duplicationPercentage = duplication.metrics[0].val / totalLinesOfCode;
 	return getThresholdRank(duplicationPercentage, thresholds);
 }
 
