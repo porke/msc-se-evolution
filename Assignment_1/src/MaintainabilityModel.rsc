@@ -41,6 +41,10 @@ rel[int, num] getAggregatedValueCounts(list[num] metricValues,
 	return {<threshold, sum([x.lines | x <- valueByThreshold, x.rank == threshold])> | threshold <- thresholdRanks};
 }
 
+list[real] getValueCategories(rel[int, num] aggregatedValueCounts, int totalValue, list[int] thresholdRanks) {
+	return [toReal(sum(aggregatedValueCounts[rank])) / toReal(totalValue) | rank <- thresholdRanks];
+}
+
 Quality getQualityForThresholds(list[num] metricValues,
 							   	list[int] thresholdValues,
 							   	list[list[real]] categoryThresholds,
@@ -51,8 +55,8 @@ Quality getQualityForThresholds(list[num] metricValues,
 								
 	// Map the aggregated values to percentages of code in each categories
 	rel[int, num] aggregatedValueCounts = getAggregatedValueCounts(metricValues, thresholdValues);	
-	list[real] valueCategories = [toReal(sum(aggregatedValueCounts[rank])) / toReal(totalValue) | rank <- thresholdRanks];	
-	// Thresholds for low, medium, high and very high risk code 	
+	list[real] valueCategories = getValueCategories(aggregatedValueCounts, totalValue, thresholdRanks);	
+	// Thresholds for low, medium, high and very high risk code
 	list[int] qualitiesPerSizeCategory = [getThresholdRank(valueCategories[x - 1], categoryThresholds[x - 1]) | x <- thresholdRanks];    
 	return min(qualitiesPerSizeCategory);
 }
@@ -82,7 +86,7 @@ Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 Quality getDuplicationQuality(CodeProperty duplication) {
 	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
 	int totalLinesOfCode = 12345; 	// Test data
-	num duplicationValue = 123; 	// TODO: duplication.metrics[0].val 
+	num duplicationValue = duplication.metrics[0].val; 
 	num duplicationPercentage = duplicationValue / totalLinesOfCode;
 	return getThresholdRank(duplicationPercentage, thresholds);
 }
@@ -130,15 +134,12 @@ void computeModel(loc project) {
 // Visualization code
 //////////////////////////////////////////////////
 FProperty qualityToColor(Quality q) {
-	switch (q) {
-		case 1: return fillColor("red");
-		case 2: return fillColor("orange");
-		case 3: return fillColor("yellow");
-		case 4: return fillColor("green");
-		case 5: return fillColor("darkGreen");
-	}
-	
-	return fillColor("grey");
+	map[Quality, FProperty] qToCol = (1 : fillColor("red"),
+									  2 : fillColor("orange"),
+									  3 : fillColor("yellow"),
+									  4 : fillColor("green"),
+									  5 : fillColor("darkGreen"));
+	return qToCol[q];
 }
 
 str qualityToString(Quality q) {
@@ -151,8 +152,7 @@ str qualityToString(Quality q) {
 }
 
 void renderModel(MaintainabilityModel model) {
-	map[SystemProperty, Quality] qualitiesPerSystemProperty = 
-			(model[p] : sum([codePropertyEval.evaluationFunc(codePropertyEval.property) | codePropertyEval <- model[p].properties]) / size(model[p].properties) | p <- [0..size(model)]);
+	map[SystemProperty, Quality] qualitiesPerSystemProperty =  (p : getSystemPropertyQuality(p) | p <- model);
 	Quality overallQuality = sum([qualitiesPerSystemProperty[p] | p <- model]) / size(model);
 	Figure modelFigure = tree(box(text("Maintainability: (<qualityToString(overallQuality)>)"), qualityToColor(overallQuality)), 
 								[renderSystemProperty(p) | p <- toList(qualitiesPerSystemProperty)], 
@@ -175,7 +175,7 @@ Figure renderVolume(CodeProperty prop) {
 }
 
 Figure renderUnitSize(CodeProperty prop) {
-	// TODO: compute size categories
+	// TODO: compute size categories	
 	list[tuple[str name, real val]] sizeCategories = [<"Low", 0.1>, <"Medium", 0.2>, <"High", 0.3>, <"Very high", 0.4>];
 	list[Figure] captionRow = [box(text("Risk")), box(text("% code"))];
 	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- sizeCategories]));
@@ -196,6 +196,11 @@ Figure renderDuplication(CodeProperty prop) {
 // Test code
 //////////////////////////////////////////////////
 
+void performanceTest() {
+	loc project = |project://hsqldb-2.3.1/hsqldb/src|;
+	computeModel(project);
+}
+
 void testVolume() {
 	loc project = |project://smallsql0.21/|;
 	CodeProperty property = computeVolume(project);
@@ -203,7 +208,7 @@ void testVolume() {
 }
 
 void computeModel() {
-	loc project = |project://smallsql0.21/|;
+	loc project = |project://smallsql0.21/src|;
 	computeModel(project);
 }
 

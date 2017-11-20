@@ -9,9 +9,7 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::AST;
 
 list[loc] getMethodList(loc project) {
-	//change to project input
-	loc project0 = |project://smallsql0.21/src/smallsql|;
-	projectModel0 = createM3FromEclipseProject(project0);
+	projectModel0 = createM3FromEclipseProject(project);
 		
 	//Units are methods in java. The next line extracts all methods from the project.
 	unitMethods = methods(projectModel0);

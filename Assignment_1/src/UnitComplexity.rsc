@@ -38,20 +38,20 @@ int computeCyclomaticComplexity(loc method, Declaration fileAst) {
 	return complexity;
 }
 
-void main() {
-	loc project = |project://smallsql0.21/|;
-	M3 projectModel = createM3FromEclipseProject(project);	
-	
-	list[loc] classList = toList(classes(projectModel));
-	list[ClassAst] astsPerClass = [<c, toList(methods(projectModel, c)), createAstFromFile(c, true)> | c <- classList];
-	list[MethodComplexity] complexities = [*[<m, computeCyclomaticComplexity(m, c.ast)> | m <- c.methods] | c <- astsPerClass];
-	text(complexities);
-}
-
 CodeProperty computeUnitComplexity(loc project) {
 	M3 projectModel = createM3FromEclipseProject(project);	
 	list[loc] classList = toList(classes(projectModel));
 	list[ClassAst] astsPerClass = [<c, toList(methods(projectModel, c)), createAstFromFile(c, true)> | c <- classList];
 
 	return <"UnitComplexity", [*[<m.uri, computeCyclomaticComplexity(m, c.ast)> | m <- c.methods] | c <- astsPerClass]>;
+}
+
+void main() {
+	loc project = |project://smallsql0.21/src|;
+	M3 projectModel = createM3FromEclipseProject(project);	
+	
+	list[loc] classList = toList(classes(projectModel));
+	list[ClassAst] astsPerClass = [<c, toList(methods(projectModel, c)), createAstFromFile(c, true)> | c <- classList];
+	list[MethodComplexity] complexities = [*[<m, computeCyclomaticComplexity(m, c.ast)> | m <- c.methods] | c <- astsPerClass];
+	text(complexities);
 }

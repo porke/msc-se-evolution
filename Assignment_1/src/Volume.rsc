@@ -43,7 +43,3 @@ CodeProperty computeVolume(loc project) {
 	return <"Volume", [<"LOC", totalLinesOfCode>, <"ManYears", totalManYears>]>;
 }
 
-void main() {
-	loc project0 = |project://smallsql0.21/src/|;
-	iprintln(computeVolume(project0));
-}
