@@ -4,10 +4,16 @@ import util::ValueUI;
 
 import IO;
 import List;
+import String;
 
 alias Metric = tuple[str name, num val];
 alias CodeProperty = tuple[str name, list[Metric] metrics];
 
+// TODO:  account for this case:
+// codecodecode /* comment
+// * comment some mode
+// comment even more
+// end the comment */
 list[str] pruneMultilineComments(list[str] lines) {
 	list[str] outList = [];
 	bool isComment = false;
@@ -20,14 +26,14 @@ list[str] pruneMultilineComments(list[str] lines) {
 		else {
 			isComment = (/^[\s]*(\/\*).*$/ := line);
 			if (!isComment) {
-				append line;
+				append trim(line);
 			}
 		}
 	}
 }
 
 list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
-	return [line | line <- lines,
+	return [trim(line) | line <- lines,
 			/^[\s]*$/ !:= line,					// Whitespace lines
 			/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments
 			/^[\s]*(\/\*).*(\*\/)[\s]*$/ !:= line ]; // Single line comments with *

@@ -7,6 +7,7 @@ import Relation;
 import IO;
 import vis::Render;
 import vis::Figure;
+import DateTime;
 
 import Common;
 import Duplication;
@@ -57,7 +58,7 @@ Quality getUnitSizeQuality(CodeProperty unitSize) {
 	return getQualityForThresholds([m.val | m <- unitSize.metrics],
 									lineThresholds,
 									relativeSizeThresholds,
-									totalLinesOfCode);	
+									totalLinesOfCode);
 }
 
 Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
@@ -80,10 +81,30 @@ Quality getDuplicationQuality(CodeProperty duplication) {
 }
 
 list[CodePropertyEvaluation] computeCodeProperties(loc project) {
-	return [<computeVolume(project), getVolumeQuality>,
-			<computeUnitSize(project), getUnitSizeQuality>,
-			<computeUnitComplexity(project), getUnitComplexityQuality>,
-			<computeDuplication(project), getDuplicationQuality>];
+	datetime computationStart = now();	
+	datetime stopwatch = now();
+	list[CodePropertyEvaluation] ret = [<computeVolume(project), getVolumeQuality>];
+	print("Volume computed in: ");
+	println(createDuration(stopwatch, now()));
+	
+	stopwatch = now();
+	ret = ret + <computeUnitSize(project), getUnitSizeQuality>;
+	print("Unit size computed in: ");
+	println(createDuration(stopwatch, now()));
+	
+	stopwatch = now();
+	ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality>;
+	print("Unit complexity computed in: ");
+	println(createDuration(stopwatch, now()));
+	
+	stopwatch = now();
+	ret = ret + <computeDuplication(project), getDuplicationQuality>;	
+	print("Duplication computed in: ");
+	println(createDuration(stopwatch, now()));
+	
+	print("All metrics computed incomputed in: ");
+	println(createDuration(computationStart, now()));
+	return ret;
 }
 
 MaintainabilityModel createMaintainabilityModel(list[CodePropertyEvaluation] props) {
@@ -148,9 +169,8 @@ Figure renderCodeProperty(CodePropertyEvaluation prop) {
 // Test code
 //////////////////////////////////////////////////
 
-void testColors() {
-	Figure m = tree(box(text("Model"), fillColor("grey")), [box(text(toString(p)), qualityToColor(p)) | p <- [1..6]], std(gap(20)));
-	render(m);
+void testDateTime() {
+
 }
 
 void renderTest() {
