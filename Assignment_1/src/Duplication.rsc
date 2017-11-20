@@ -33,5 +33,5 @@ list[tuple[list[str], loc]] methodBodies(){
 }
 
 CodeProperty computeDuplication(loc project) {
-	return <"Duplication", []>;
+	return <"Duplication", [<"ClonedLines", 12345>]>;
 }
