@@ -42,7 +42,7 @@ list[int dl] duplicationCheck(){
 			if(size(methodBody[i].body)>5 && size(methodBody[j].body)>5){
 				
 				while (line < size(methodBody[i].body)-6) {
-					if (methodBody[i].body[line] in methodBody[j].body && methodBody[i].body[line+5] in methodBody[j].body && (methodBody[i].body[line..line+5] < methodBody[j].body)){
+					if (methodBody[i].body[line] in methodBody[j].body && methodBody[i].body[line+5] in methodBody[j].body && (methodBody[i].body[line..line+6] < methodBody[j].body)){
 						
 						beggining = line;
 						line += 5;
