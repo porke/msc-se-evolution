@@ -37,6 +37,10 @@ list[int dl] duplicationCheck(){
 	int beggining;
 	list[int duplLines] result = [];
 	
+	/*	int i = 1588;
+		int j = 2179;  for testing */
+	//strict subset does not only keep the values that are strictly succeeding each other. FIX!! 
+	
 	for ( int i <- [0..size(methodBody)-2] ){
 		for (int j <- [(i+1)..size(methodBody)]){
 			if(size(methodBody[i].body)>5 && size(methodBody[j].body)>5){
