@@ -74,7 +74,8 @@ Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 Quality getDuplicationQuality(CodeProperty duplication) {
 	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
 	int totalLinesOfCode = 12345; 	// Test data
-	num duplicationPercentage = duplication.metrics[0].val / totalLinesOfCode;
+	num duplicationValue = 123; 	// TODO: duplication.metrics[0].val 
+	num duplicationPercentage = duplicationValue / totalLinesOfCode;
 	return getThresholdRank(duplicationPercentage, thresholds);
 }
 
@@ -99,15 +100,39 @@ Quality getSystemPropertyQuality(SystemProperty prop) {
 void computeModel(loc project) {
 	list[CodePropertyEvaluation] codeProperties = computeCodeProperties(project);
 	MaintainabilityModel systemProperties = createMaintainabilityModel(codeProperties);
-	//iprintln([<sp.name, getSystemPropertyQuality(sp), [<cp.property.name, cp.evaluationFunc(cp.property)> | cp <- sp.properties]> | sp <- systemProperties]);
 	renderModel(systemProperties);
 }
 
 //////////////////////////////////////////////////
 // Visualization code
 //////////////////////////////////////////////////
+FProperty qualityToColor(Quality q) {
+	switch (q) {
+		case 1: return fillColor("red");
+		case 2: return fillColor("orange");
+		case 3: return fillColor("yellow");
+		case 4: return fillColor("green");
+		case 5: return fillColor("darkGreen");
+	}
+	
+	return fillColor("grey");
+}
+
+str qualityToString(Quality q) {
+	map[Quality, str] qToStr = (1 : "--",
+								2 : "-",
+								3 : "o",
+								4 : "+",
+								5 : "++");
+	
+	return qToStr[q];
+}
+
 void renderModel(MaintainabilityModel model) {
-	Figure modelFigure = tree(box(text("Model"), fillColor("grey")), [renderSystemProperty(p) | p <- model], std(gap(20)));
+	map[SystemProperty, Quality] qualitiesPerSystemProperty = 
+			(model[p] : sum([codePropertyEval.evaluationFunc(codePropertyEval.property) | codePropertyEval <- model[p].properties]) / size(model[p].properties) | p <- [0..size(model)]);
+	Quality overallQuality = sum([qualitiesPerSystemProperty[p] | p <- model]) / size(model);
+	Figure modelFigure = tree(box(text("Overall quality: " + qualityToString(overallQuality)), qualityToColor(overallQuality)), [renderSystemProperty(p) | p <- model], std(gap(20)));
 	render(modelFigure);
 }
 
@@ -122,6 +147,11 @@ Figure renderCodeProperty(CodePropertyEvaluation prop) {
 //////////////////////////////////////////////////
 // Test code
 //////////////////////////////////////////////////
+
+void testColors() {
+	Figure m = tree(box(text("Model"), fillColor("grey")), [box(text(toString(p)), qualityToColor(p)) | p <- [1..6]], std(gap(20)));
+	render(m);
+}
 
 void renderTest() {
 	MaintainabilityModel model = createMaintainabilityModel([<<"Volume", [<"LOC", 111>, <"ManYears", 123>]>, getVolumeQuality>]);
