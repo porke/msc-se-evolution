@@ -64,7 +64,9 @@ Quality getQualityForThresholds(list[num] metricValues,
 Quality getUnitSizeQuality(CodeProperty unitSize) {
 	// Classification derived from Better Code Hub because it is not in the paper
 	list[int] lineThresholds = [15, 30, 60];	
-	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);	
+	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);
+	
+	iprintln(unitSize.metrics);
 	list[list[real]] relativeSizeThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
 	return getQualityForThresholds([m.val | m <- unitSize.metrics],
 									lineThresholds,
@@ -100,24 +102,25 @@ list[CodePropertyEvaluation] computeCodeProperties(loc project) {
 	stopwatch = now();
 	ret = ret + <computeUnitSize(project), getUnitSizeQuality, renderUnitSize>;
 	println("Unit size computed in: <createDuration(stopwatch, now())>");
-	
-	stopwatch = now();
-	ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, renderUnitComplexity>;
-	println("Unit complexity computed in: <createDuration(stopwatch, now())>");
-	
-	stopwatch = now();
-	ret = ret + <computeDuplication(project), getDuplicationQuality, renderDuplication>;	
-	println("Duplication computed in: <createDuration(stopwatch, now())>");
+	//
+	//stopwatch = now();
+	//ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, renderUnitComplexity>;
+	//println("Unit complexity computed in: <createDuration(stopwatch, now())>");
+	//
+	//stopwatch = now();
+	//ret = ret + <computeDuplication(project), getDuplicationQuality, renderDuplication>;	
+	//println("Duplication computed in: <createDuration(stopwatch, now())>");
 	
 	println("All metrics computed incomputed in: <createDuration(computationStart, now())>");
 	return ret;
 }
 
-MaintainabilityModel createMaintainabilityModel(list[CodePropertyEvaluation] props) {
-	SystemProperty analysability = <"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>;
-	SystemProperty testability = <"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>;
-	SystemProperty changeability = <"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>;
-	return [analysability, testability, changeability];
+MaintainabilityModel createMaintainabilityModel(list[CodePropertyEvaluation] props) {	
+	return [
+			<"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>
+			//<"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>,
+			//<"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>
+			];
 }
 
 Quality getSystemPropertyQuality(SystemProperty prop) {
@@ -143,7 +146,8 @@ FProperty qualityToColor(Quality q) {
 }
 
 str qualityToString(Quality q) {
-	map[Quality, str] qToStr = (1 : "--",
+	map[Quality, str] qToStr = (0 : "?",
+								1 : "--",
 								2 : "-",
 								3 : "o",
 								4 : "+",

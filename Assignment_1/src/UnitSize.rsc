@@ -24,5 +24,5 @@ CodeProperty computeUnitSize(loc project) {
 	methodList = getMethodList(project);
 	//sizes(str location, int LOC of method)
 	list[Metric] sizes = [<method.uri,size(pruneMultilineComments(pruneWhitespaceAndSingleLineComments(readFileLines(method))))> | method <- methodList];
-	return <"Unit Size",sizes>;
+	return <"UnitSize",sizes>;
 }
