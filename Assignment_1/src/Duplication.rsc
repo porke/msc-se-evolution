@@ -8,7 +8,7 @@ import Map;
 
 import Volume;
 import UnitSize;
-
+import DateTime;
 
 list[tuple[list[str] body, loc name]] methodBodies(loc project){
 	//|project://smallsql0.21/src/smallsql|
@@ -39,7 +39,7 @@ for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
 				
 				//while line counter is smaller than the method size-6, check for:
 				//if method1[line] and method1[line+5] is an element of method2, and all elements inbetween are a subset of method 2
-				while (line < size(methodBody[i].body)-6 && line2 < size(methodBody[j].body)) {
+				while (line < size(methodBody[i].body)-6 && line2 < size(methodBody[j].body)-6) {
 					if (methodBody[i].body[line] in methodBody[j].body && methodBody[i].body[line+5] in methodBody[j].body && (methodBody[i].body[line..line+6] < methodBody[j].body)){
 						
 						//Find the line in method 2 where method1[line] matches, and method1[line+5] also matches (with method2[line2+5]).
@@ -88,8 +88,9 @@ for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
 
 
 CodeProperty computeDuplication(loc project) {
-
+	datetime stopwatch = now();
 	list[int] duplicationTable = duplicationCheck(project);
 	int duplicatedLines = sum(duplicationTable);
+	println("Unit size computed in: <createDuration(stopwatch, now())>");
 	return <"Duplication", [<"ClonedLines", duplicatedLines>]>;
 }
