@@ -17,18 +17,15 @@ import UnitComplexity;
 import UnitSize;
 
 alias SystemProperty = tuple[str name, list[CodePropertyEvaluation] properties];
-alias CodePropertyEvaluation = tuple[CodeProperty property, Quality (CodeProperty) evaluationFunc, Figure (CodeProperty) renderFunc];
+alias CodePropertyEvaluation = tuple[CodeProperty property,
+									 Quality (CodeProperty, list[int]) evaluationFunc,
+									 Figure (CodeProperty, list[int]) renderFunc,
+									 list[int] thresholds];
 alias MaintainabilityModel = list[SystemProperty];
 alias Quality = int;
 
 int getThresholdRank(num valueRanked, list[num] thresholds) {
 	return size([x | x <- thresholds, valueRanked <= x]) + 1;
-}
-
-Quality getVolumeQuality(CodeProperty volume) {
-	list[int] thresholds = [66, 246, 665, 1310];
-	num linesOfCodeInThousands = volume.metrics[0].val / 1000;	
-	return getThresholdRank(linesOfCodeInThousands, thresholds);
 }
 
 rel[int, num] getAggregatedValueCounts(list[num] metricValues,
@@ -61,12 +58,15 @@ Quality getQualityForThresholds(list[num] metricValues,
 	return min(qualitiesPerSizeCategory);
 }
 
-Quality getUnitSizeQuality(CodeProperty unitSize) {
+Quality getVolumeQuality(CodeProperty volume, list[int] thresholds) {	
+	num linesOfCodeInThousands = volume.metrics[0].val / 1000;	
+	return getThresholdRank(linesOfCodeInThousands, thresholds);
+}
+
+Quality getUnitSizeQuality(CodeProperty unitSize, list[int] lineThresholds) {
 	// Classification derived from Better Code Hub because it is not in the paper
-	list[int] lineThresholds = [15, 30, 60];	
 	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);
 	
-	iprintln(unitSize.metrics);
 	list[list[real]] relativeSizeThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
 	return getQualityForThresholds([m.val | m <- unitSize.metrics],
 									lineThresholds,
@@ -74,9 +74,8 @@ Quality getUnitSizeQuality(CodeProperty unitSize) {
 									totalLinesOfCode);
 }
 
-Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
-	// Risk wrt CC: low, moderate, high, very high
-	list[int] riskThresholds = [11, 21, 51];
+Quality getUnitComplexityQuality(CodeProperty unitComplexity, list[int] riskThresholds) {
+	// Risk wrt CC: low, moderate, high, very high	
 	int totalLinesOfCode = sum([toInt(x) | x <- unitComplexity.metrics.val]); 	// Test data
 	list[list[real]] relativeRiskThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
 	return getQualityForThresholds([m.val | m <- unitComplexity.metrics],
@@ -85,10 +84,9 @@ Quality getUnitComplexityQuality(CodeProperty unitComplexity) {
 									totalLinesOfCode);	
 }
 
-Quality getDuplicationQuality(CodeProperty duplication) {
-	list[real] thresholds = [0.03, 0.05, 0.1, 0.2];
-	int totalLinesOfCode = 12345; 	// Test data
-	num duplicationValue = duplication.metrics[0].val; 
+Quality getDuplicationQuality(CodeProperty duplication, list[int] thresholds) {	
+	num duplicationValue = duplication.metrics[0].val;
+	int totalLinesOfCode = 12345; 		// TODO: Finish it
 	num duplicationPercentage = duplicationValue / totalLinesOfCode;
 	return getThresholdRank(duplicationPercentage, thresholds);
 }
@@ -96,35 +94,35 @@ Quality getDuplicationQuality(CodeProperty duplication) {
 list[CodePropertyEvaluation] computeCodeProperties(loc project) {
 	datetime computationStart = now();	
 	datetime stopwatch = now();
-	list[CodePropertyEvaluation] ret = [<computeVolume(project), getVolumeQuality, renderVolume>];
+	list[CodePropertyEvaluation] ret = [<computeVolume(project), getVolumeQuality, renderVolume, [66, 246, 665, 1310]>];
 	println("Volume computed in: <createDuration(stopwatch, now())>");
 	
 	stopwatch = now();
-	ret = ret + <computeUnitSize(project), getUnitSizeQuality, renderUnitSize>;
+	ret = ret + <computeUnitSize(project), getUnitSizeQuality, renderUnitSize, [15, 30, 60]>;
 	println("Unit size computed in: <createDuration(stopwatch, now())>");
-	//
+	
+	stopwatch = now();
+	ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, renderUnitComplexity, [11, 21, 51]>;
+	println("Unit complexity computed in: <createDuration(stopwatch, now())>");
+	
 	//stopwatch = now();
-	//ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, renderUnitComplexity>;
-	//println("Unit complexity computed in: <createDuration(stopwatch, now())>");
-	//
-	//stopwatch = now();
-	//ret = ret + <computeDuplication(project), getDuplicationQuality, renderDuplication>;	
+	//ret = ret + <computeDuplication(project), getDuplicationQuality, renderDuplication, [3, 5, 10, 20]>;	
 	//println("Duplication computed in: <createDuration(stopwatch, now())>");
 	
-	println("All metrics computed incomputed in: <createDuration(computationStart, now())>");
+	println("All metrics computed in: <createDuration(computationStart, now())>");
 	return ret;
 }
 
 MaintainabilityModel createMaintainabilityModel(list[CodePropertyEvaluation] props) {	
 	return [
-			<"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>
-			//<"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>,
-			//<"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>
+			<"Analysability", [pe | pe <- props, pe.property.name == "Volume" || pe.property.name == "Duplication" || pe.property.name == "UnitSize"]>,
+			<"Testability", [pe | pe <- props, pe.property.name == "UnitComplexity" || pe.property.name == "UnitSize"]>,
+			<"Changeability", [pe | pe <- props, pe.property.name == "Duplication" || pe.property.name == "UnitComplexity"]>
 			];
 }
 
 Quality getSystemPropertyQuality(SystemProperty prop) {
-	return sum([0] + [pe.evaluationFunc(pe.property) | pe <- prop.properties]) / size(prop.properties);
+	return sum([0] + [pe.evaluationFunc(pe.property, pe.thresholds) | pe <- prop.properties]) / size(prop.properties);
 }
 
 void computeModel(loc project) {
@@ -170,29 +168,37 @@ Figure renderSystemProperty(tuple[SystemProperty, Quality] prop) {
 }
 
 Figure renderCodeProperty(CodePropertyEvaluation prop) {
-	Quality q = prop.evaluationFunc(prop.property);
-	return tree(box(text("<prop.property.name>: <qualityToString(q)>"), qualityToColor(q)), [prop.renderFunc(prop.property)]);
+	Quality q = prop.evaluationFunc(prop.property, prop.thresholds);
+	return tree(box(text("<prop.property.name>: <qualityToString(q)>"), qualityToColor(q)), [prop.renderFunc(prop.property, prop.thresholds)]);
 }
 
-Figure renderVolume(CodeProperty prop) {
+Figure renderVolume(CodeProperty prop, list[int] thresholds) {
 	return box(grid([[box(text(m.name)), box(text("<m.val>"))] | m <- prop.metrics]));
 }
 
-Figure renderUnitSize(CodeProperty prop) {
-	// TODO: compute size categories	
-	list[tuple[str name, real val]] sizeCategories = [<"Low", 0.1>, <"Medium", 0.2>, <"High", 0.3>, <"Very high", 0.4>];
-	list[Figure] captionRow = [box(text("Risk")), box(text("% code"))];
+Figure renderUnitSize(CodeProperty prop, list[int] thresholds) {
+	real totalLines = toReal(sum([m.val | m <- prop.metrics]));
+	rel[int, num] valuesByCategory = getAggregatedValueCounts([m.val | m <- prop.metrics], thresholds);
+	list[tuple[str name, num val]] sizeCategories = [<"Low (0-<thresholds[0]> LOC)", round(sum(valuesByCategory[1]) / totalLines * 100, 0.1)>,
+													 <"Medium (<thresholds[0]>-<thresholds[1]> LOC)", round(sum(valuesByCategory[2]) / totalLines * 100, 0.1)>,
+													 <"High (<thresholds[1]>-<thresholds[2]> LOC)", round(sum(valuesByCategory[3]) / totalLines * 100, 0.1)>,
+													 <"Very high (<thresholds[2]>+ LOC)", round(sum(valuesByCategory[4]) / totalLines * 100, 0.1)>];
+	list[Figure] captionRow = [box(text("Risk")), box(text("% LOC"))];
 	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- sizeCategories]));
 }
 
-Figure renderUnitComplexity(CodeProperty prop) {
-	// TODO: compute complexity categories
-	list[tuple[str name, real val]] sizeCategories = [<"Low", 0.1>, <"Medium", 0.2>, <"High", 0.3>, <"Very high", 0.4>];
+Figure renderUnitComplexity(CodeProperty prop, list[int] thresholds) {	
+	rel[int, num] valuesByCategory = getAggregatedValueCounts([m.val | m <- prop.metrics], thresholds);
+	real totalLines = 1.0;
+	list[tuple[str name, num val]] complexityCategories = [<"Low (0-<thresholds[0]> LOC)", round(sum(valuesByCategory[1]) / totalLines * 100, 0.1)>,
+													 <"Medium (<thresholds[0]>-<thresholds[1]> LOC)", round(sum(valuesByCategory[2]) / totalLines * 100, 0.1)>,
+													 <"High (<thresholds[1]>-<thresholds[2]> LOC)", round(sum(valuesByCategory[3]) / totalLines * 100, 0.1)>,
+													 <"Very high (<thresholds[2]>+ LOC)", round(sum(valuesByCategory[4]) / totalLines * 100, 0.1)>];
 	list[Figure] captionRow = [box(text("Risk")), box(text("% code"))];
-	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- sizeCategories]));
+	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- complexityCategories]));
 }
 
-Figure renderDuplication(CodeProperty prop) {
+Figure renderDuplication(CodeProperty prop, list[int] thresholds) {
 	return box(grid([[box(text(m.name)), box(text("<m.val>"))] | m <- prop.metrics]));
 }
 
@@ -205,31 +211,7 @@ void performanceTest() {
 	computeModel(project);
 }
 
-void testVolume() {
-	loc project = |project://smallsql0.21/|;
-	CodeProperty property = computeVolume(project);
-	render(renderVolume(property));
-}
-
 void computeModel() {
 	loc project = |project://smallsql0.21/src|;
 	computeModel(project);
-}
-
-void computeUnitSizeQuality() {
-	loc project = |project://smallsql0.21/|;
-	CodeProperty property = computeUnitSize(project); 
-	iprintln(getUnitSizeQuality(property));
-}
-
-void computeVolumeQuality() {
-	loc project = |project://smallsql0.21/|;
-	CodeProperty property = computeVolume(project); 
-	iprintln(getVolumeQuality(property));
-}
-
-void computeUnitComplexityQuality() {
-	loc project = |project://smallsql0.21/|;
-	CodeProperty property = computeUnitComplexity(project); 
-	iprintln(getUnitComplexityQuality(property));
 }
