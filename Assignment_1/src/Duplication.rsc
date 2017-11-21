@@ -4,38 +4,26 @@ import Common;
 import IO;
 import Set;
 import List;
-import lang::java::jdt::m3::Core;
-import lang::java::m3::Core;
-import lang::java::jdt::m3::AST;
 import Map;
 
-
+import Volume;
 import UnitSize;
 
-//This function gets all the methods and sorts them by LOC. Left is LOC, right are locations. e.g. all methods with 10 LOC look like 10:{loc1,loc2,loc3,...,locn}
-map[num lines, set[loc] name] listByLength(){
-	methodList = getMethodList(|project://Assignment_1/smallsql0.21/src/smallsql|); //Retrieves list from UnitSize.
-	//saves all locations in tuples of (LOC, Location);
-	list[tuple[num val, loc name]] sizesDupl = [<size(pruneMultilineComments(pruneWhitespaceAndSingleLineComments(readFileLines(method)))),method> | method <- methodList];
-	
-	//use sort(domain(sizesDupl)); to get a sorted set of the domain to use for matching. 
-	
-	return toMap(sizesDupl); //Maps all locations with the same length together.
-}
 
-list[tuple[list[str] body, loc name]] methodBodies(){
-	methodList = getMethodList(|project://Assignment_1/smallsql0.21/src/smallsql|);
+list[tuple[list[str] body, loc name]] methodBodies(loc project){
+	//|project://smallsql0.21/src/smallsql|
+	methodList = getMethodList(project);
 	list[tuple[list[str] body, loc name]] methodBody = [<pruneMultilineComments(pruneWhitespaceAndSingleLineComments(readFileLines(location)))[1..size(readFileLines(location))-1],location> | location <- methodList ];
 	
 	return methodBody;
 }
 
-list[int dl] duplicationCheck(){
+list[int] duplicationCheck(loc project){
 
-	methodBody = methodBodies();
+	methodBody = methodBodies(project);
 	int line = 0;
 	int beggining;
-	list[int duplLines] result = [];
+	list[int] result = [];
 	
 	/*	int i = 1588;
 		int j = 2179;  for testing */
@@ -73,5 +61,9 @@ list[int dl] duplicationCheck(){
 
 
 CodeProperty computeDuplication(loc project) {
-	return <"Duplication", [<"ClonedLines", 12345>]>;
+	int totalLinesOfCode = computeTotalLinesOfCode(project);
+	list[int] duplicationTable = duplicationCheck(project);
+	int duplicatedLines = sum(duplicationTable);
+	println("Duplicated Lines: <duplicatedLines>, Project total LOC: <totalLinesOfCode>");
+	return <"Duplication", [<"ClonedLines", (duplicatedLines/(totalLinesOfCode*1.0))*100>]>;
 }
