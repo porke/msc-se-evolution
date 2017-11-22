@@ -11,9 +11,6 @@ import lang::java::jdt::m3::AST;
 list[loc] getMethodList(loc project) {
 	projectModel0 = createM3FromEclipseProject(project);
 	unitMethods = methods(projectModel0);
-	sizeMethods = size(unitMethods);
-
-	//Add all method locations in a list
 	list[loc] methodList = toList(unitMethods);
 	
 	return methodList;
