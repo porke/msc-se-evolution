@@ -1,4 +1,4 @@
-# Software Exolution - Assignment 1
+# Software Evolution - Assignment 1
 
 **Authors**
  - Wojciech Czabanski
@@ -99,6 +99,11 @@ number of 6 lines chosen?
 
 Initially, the design used Maps. The main map had the lines of code of the method on one side, and the other side contained tuples of all method locations that matched those LOC. We were to use this to compute all methods larger than 6 lines, and then go into case by case comparison, however we decided it was the same with lists of the method bodies, and required less LOC.
 
+#### To include or not to include Originals
+We decided we would not include the original duplicated code. By our line of thought, if we took a method, and copy pasted the contents in the same method, we could argue that it makes more sense to say that half (50%) of this method is a clone, rather than 100%.
+
+#### Computing duplication only in methods
+We believe that anything outside of methods such as imports do not have a great impact in code quality, as such we decided to only include methods in our calculations. As such, we also use the total method LOC to compute the percentage.
 
 ### Quality computation
 
