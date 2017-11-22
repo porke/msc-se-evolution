@@ -92,6 +92,21 @@ The duplication is calculated as a case by case comparison. Initially, the metho
 If i==j there are special conditions to ensure that we do not get incorrect result. Step 1 is one of these conditions, and
 we also have a similar one for the final 6 lines of code to ensure that line1==line2 when i==j never happens.
 
+###Design Questions and Changes
+
+We found it interesting that the SIG model did not consider other types of clones, and we also were wondering why was the specific
+number of 6 lines chosen?
+
+Initially, the design used Maps. The main map had the lines of code of the method on one side, and the other side contained tuples of all method locations that matched those LOC. We were to use this to compute all methods larger than 6 lines, and then go into case by case comparison, however we decided it was the same with lists of the method bodies, and required less LOC.
+
+
 ### Quality computation
 
 The quality is computed by comparing the number of duplicated lines to the total line count and obtaining a rank by using the SIG maintainability model threshold table.
+
+
+##Additional Metrics
+
+#Coupling
+It was a surprise that coupling was not included in the SIG model. One could argue that it is one of the most important metrics to look at in terms of software maintainability. If the code contains a high amount of strong coupling, this is negative for its maintainability as one small change in a module may create a ripple effect of changes. The impact of change may discourage further evolution of the project, and poses quite a danger to code-breaking bugs.
+The only reason it could have been excluded is that it is very difficult to fully automate, but similar to duplication, a simpler version of coupling could be used as a metric.
