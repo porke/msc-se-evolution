@@ -92,3 +92,8 @@ void renderModel() {
 	loc project = |project://smallsql0.21/src|;
 	renderModel(computeModel(project));
 }
+
+void renderModelPerformance() {
+	loc project = |project://hsqldb-2.3.1/hsqldb/src/|;
+	renderModel(computeModel(project));
+}
