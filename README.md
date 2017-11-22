@@ -79,8 +79,18 @@ The quality for unit complexity is computed in a similar manner as for the unit 
 
 ### Metric computation
 
-TODO: George to describe how he is doing it
-TODO: Include the questions from the document in the report
+The duplication is calculated as a case by case comparison. Initially, the method bodies are grabbed from UnitSize, excluding the 1st and last line. Then we use two for loops with i and j to check each method, while also ignoring methods smaller than 6 lines. The rest of the algorithm can be described in steps:
+1. If we are searching through the same method body, line2 starts from the 6th line to ensure it doesn't match itself
+   Also, in this case if the method is smaller than 12 lines we skip this iteration of j.
+2. While line counter has not reached the final 5 lines, check for: 
+   if method1[line] and method1[line+5] is an element of method2, and all elements inbetween are a subset of method 2
+3. Find the line in method 2 where method1[line] == method2[line2], and method1[line+5] == method2[line2+5].
+4. If the 6 lines we found match in strict sequence (using slices), start looking at their successors until they stop matching.
+5. Add lines to result. 
+6. Reset line counters and goto step 1
+
+If i==j there are special conditions to ensure that we do not get incorrect result. Step 1 is one of these conditions, and
+we also have a similar one for the final 6 lines of code to ensure that line1==line2 when i==j never happens.
 
 ### Quality computation
 
