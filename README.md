@@ -92,7 +92,7 @@ The duplication is calculated as a case by case comparison. Initially, the metho
 If i==j there are special conditions to ensure that we do not get incorrect result. Step 1 is one of these conditions, and
 we also have a similar one for the final 6 lines of code to ensure that line1==line2 when i==j never happens.
 
-###Design Questions and Changes
+### Design Questions and Changes
 
 We found it interesting that the SIG model did not consider other types of clones, and we also were wondering why was the specific
 number of 6 lines chosen?
