@@ -79,7 +79,8 @@ Figure renderUnitComplexity(CodeProperty prop, list[int] thresholds) {
 }
 
 Figure renderDuplication(CodeProperty prop, list[int] thresholds) {
-	return box(grid([[box(text(m.name)), box(text("<m.val>"))] | m <- prop.metrics]));
+	list[Figure] newBox = [box(text("Percentage")), box(text("<round((prop.metrics[0].val/(prop.metrics[1].val*1.0))*100,0.001)>%"))];
+	return box(grid([[box(text(m.name)), box(text("<m.val>"))] | m <- prop.metrics] + [newBox]));
 }
 
 
