@@ -105,8 +105,8 @@ Initially, the design used Maps. The main map had the lines of code of the metho
 The quality is computed by comparing the number of duplicated lines to the total line count and obtaining a rank by using the SIG maintainability model threshold table.
 
 
-##Additional Metrics
+## Additional Metrics
 
-#Coupling
+###Coupling
 It was a surprise that coupling was not included in the SIG model. One could argue that it is one of the most important metrics to look at in terms of software maintainability. If the code contains a high amount of strong coupling, this is negative for its maintainability as one small change in a module may create a ripple effect of changes. The impact of change may discourage further evolution of the project, and poses quite a danger to code-breaking bugs.
 The only reason it could have been excluded is that it is very difficult to fully automate, but similar to duplication, a simpler version of coupling could be used as a metric.
