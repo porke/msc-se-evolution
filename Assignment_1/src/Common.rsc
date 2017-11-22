@@ -45,3 +45,15 @@ int getLinesOfCodeFromLocation(loc file) {
 	list[str] physicalCodeLines = pruneMultilineComments(lines); 
 	return size(physicalCodeLines);
 }
+
+list[loc] getSourceFilesFromDirRecursively(loc directory) {
+	list[loc] sourceFiles = [directory + s | s <- listEntries(directory), isFile(directory + s)];
+	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];	
+	return sourceFiles + [*getSourceFilesFromDirRecursively(d) | d <- subDirectories];
+}
+
+int computeTotalLinesOfCode(loc projectLocation) {
+	list[int] linesPerFile = [getLinesOfCodeFromLocation(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
+	return sum(linesPerFile);
+}
+

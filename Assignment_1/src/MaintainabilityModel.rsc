@@ -17,7 +17,7 @@ alias MaintainabilityModel = list[SystemProperty];
 alias Quality = int;
 
 int getThresholdRank(num valueRanked, list[num] thresholds) {
-	return size([x | x <- thresholds, valueRanked <= x]) + 1;
+	return size([x | x <- thresholds, valueRanked < x]) + 1;
 }
 
 map[int, num] getAggregatedValueCounts(list[num] metricValues,
@@ -58,7 +58,6 @@ Quality getVolumeQuality(CodeProperty volume, list[int] thresholds) {
 Quality getUnitSizeQuality(CodeProperty unitSize, list[int] lineThresholds) {
 	// Classification derived from Better Code Hub because it is not in the paper
 	int totalLinesOfCode = sum([toInt(x) | x <- unitSize.metrics.val]);
-	
 	list[list[real]] relativeSizeThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
 	return getQualityForThresholds([m.val | m <- unitSize.metrics],
 									lineThresholds,
@@ -68,19 +67,19 @@ Quality getUnitSizeQuality(CodeProperty unitSize, list[int] lineThresholds) {
 
 Quality getUnitComplexityQuality(CodeProperty unitComplexity, list[int] riskThresholds) {
 	// Risk wrt CC: low, moderate, high, very high	
-	int totalLinesOfCode = sum([toInt(x) | x <- unitComplexity.metrics.val]); 	// Test data
+	num totalComplexity = sum([m.val | m <- tail(unitComplexity.metrics)]);
 	list[list[real]] relativeRiskThresholds = [[1.0, 1.0, 1.0, 1.0], [0.25, 0.3, 0.4, 0.5], [0.0, 0.01, 0.1, 0.15], [0.0, 0.0, 0.0, 0.05]];
-	return getQualityForThresholds([m.val | m <- unitComplexity.metrics],
+	return getQualityForThresholds([m.val | m <- tail(unitComplexity.metrics)],
 									riskThresholds,
 									relativeRiskThresholds,
-									totalLinesOfCode);	
+									totalComplexity);	
 }
 
 Quality getDuplicationQuality(CodeProperty duplication, list[int] thresholds) {	
-	num duplicationValue = duplication.metrics[0].val;
-	int totalLinesOfCode = 12345; 		// TODO: Finish it
-	num duplicationPercentage = duplicationValue / totalLinesOfCode;
-	return getThresholdRank(duplicationPercentage, thresholds);
+	num duplicatedLines = duplication.metrics[0].val;
+	num totalLinesOfCode = duplication.metrics[1].val;
+	num duplicationPercentage = duplicatedLines / toReal(totalLinesOfCode);
+	return getThresholdRank(duplicationPercentage * 100, thresholds);
 }
 
 list[CodePropertyEvaluation] computeCodeProperties(loc project) {
@@ -94,12 +93,12 @@ list[CodePropertyEvaluation] computeCodeProperties(loc project) {
 	println("Unit size computed in: <createDuration(stopwatch, now())>");
 	
 	stopwatch = now();
-	ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, [11, 21, 51]>;
+	ret = ret + <computeUnitComplexity(project), getUnitComplexityQuality, [10, 20, 50]>;
 	println("Unit complexity computed in: <createDuration(stopwatch, now())>");
 	
-	//stopwatch = now();
-	//ret = ret + <computeDuplication(project), getDuplicationQuality, [3, 5, 10, 20]>;	
-	//println("Duplication computed in: <createDuration(stopwatch, now())>");
+	stopwatch = now();
+	ret = ret + <computeDuplication(project), getDuplicationQuality, [3, 5, 10, 20]>;	
+	println("Duplication computed in: <createDuration(stopwatch, now())>");
 	
 	println("All metrics computed in: <createDuration(computationStart, now())>");
 	return ret;

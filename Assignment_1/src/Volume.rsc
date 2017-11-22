@@ -26,17 +26,6 @@ real computeManYears(int totalLinesOfCode) {
 	return toReal(computeTheNumberOfFunctionPoints(totalLinesOfCode)) / getProductivityAveragePerStaffYearForJava();
 }
 
-list[loc] getSourceFilesFromDirRecursively(loc directory) {
-	list[loc] sourceFiles = [directory + s | s <- listEntries(directory), isFile(directory + s)];
-	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];	
-	return sourceFiles + [*getSourceFilesFromDirRecursively(d) | d <- subDirectories];
-}
-
-int computeTotalLinesOfCode(loc projectLocation) {
-	list[int] linesPerFile = [getLinesOfCodeFromLocation(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
-	return sum(linesPerFile);
-}
-
 CodeProperty computeVolume(loc project) {	
 	int totalLinesOfCode = computeTotalLinesOfCode(project);
 	real totalManYears = round(computeManYears(totalLinesOfCode), 0.01);		

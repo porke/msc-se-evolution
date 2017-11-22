@@ -63,18 +63,18 @@ Figure renderUnitSize(CodeProperty prop, list[int] thresholds) {
 													 <"Medium (<thresholds[0]>-<thresholds[1]> LOC)", round(valuesByCategory[2] / totalLines * 100, 0.1)>,
 													 <"High (<thresholds[1]>-<thresholds[2]> LOC)", round(valuesByCategory[3] / totalLines * 100, 0.1)>,
 													 <"Very high (<thresholds[2]>+ LOC)", round(valuesByCategory[4] / totalLines * 100, 0.1)>];
-	list[Figure] captionRow = [box(text("Risk")), box(text("% LOC"))];
+	list[Figure] captionRow = [box(text("Unit Risk")), box(text("% LOC"))];
 	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- sizeCategories]));
 }
 
 Figure renderUnitComplexity(CodeProperty prop, list[int] thresholds) {	
-	map[int, num] valuesByCategory = getAggregatedValueCounts([m.val | m <- prop.metrics], thresholds);
-	real totalLines = 1.0;
-	list[tuple[str name, num val]] complexityCategories = [<"Low (0-<thresholds[0]> LOC)", round(valuesByCategory[1] / totalLines * 100, 0.1)>,
-													 <"Medium (<thresholds[0]>-<thresholds[1]> LOC)", round(valuesByCategory[2] / totalLines * 100, 0.1)>,
-													 <"High (<thresholds[1]>-<thresholds[2]> LOC)", round(valuesByCategory[3] / totalLines * 100, 0.1)>,
-													 <"Very high (<thresholds[2]>+ LOC)", round(valuesByCategory[4] / totalLines * 100, 0.1)>];
-	list[Figure] captionRow = [box(text("Risk")), box(text("% code"))];
+	real totalComplexity = toReal(sum([m.val | m <- tail(prop.metrics)]));
+	map[int, num] valuesByCategory = getAggregatedValueCounts([m.val | m <- tail(prop.metrics)], thresholds);
+	list[tuple[str name, num val]] complexityCategories = [<"Low (0-<thresholds[0]> CC)", round(valuesByCategory[1] / totalComplexity * 100, 0.1)>,
+													 <"Medium (<thresholds[0]>-<thresholds[1]> CC)", round(valuesByCategory[2] / totalComplexity * 100, 0.1)>,
+													 <"High (<thresholds[1]>-<thresholds[2]> CC)", round(valuesByCategory[3] / totalComplexity * 100, 0.1)>,
+													 <"Very high (<thresholds[2]>+ CC)", round(valuesByCategory[4] / totalComplexity * 100, 0.1)>];
+	list[Figure] captionRow = [box(text("Unit Risk")), box(text("% CC"))];
 	return box(grid([captionRow] + [[box(text(s.name)), box(text("<s.val>"))] | s <- complexityCategories]));
 }
 
