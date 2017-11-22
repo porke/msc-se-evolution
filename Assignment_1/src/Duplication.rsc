@@ -19,7 +19,6 @@ list[tuple[list[str] body, loc name]] methodBodies(loc project){
 }
 
 
-//[i | i <- [0..size(x[237].body)-5], j <- [0..size(x[800].body)-5], x[327].body[i..i+5] == x[800].body[j..j+5] ]; 
 list[int] duplicationCheck(loc project){
 
 	methodBody = methodBodies(project);
@@ -31,7 +30,7 @@ list[int] duplicationCheck(loc project){
 	
 
 
-for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
+for ( int i <- [0..size(methodBody)], size(methodBody[i].body)>5 ){
 		
 	for (int j <- [i..size(methodBody)], size(methodBody[j].body)>5){ 	
 		
@@ -43,7 +42,7 @@ for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
 				
 				//while line counter is smaller than the method size-6, check for:
 				//if method1[line] and method1[line+5] is an element of method2, and all elements inbetween are a subset of method 2
-				while (line < size(methodBody[i].body)-6 && line2 < size(methodBody[j].body)-6) {
+				while (line < size(methodBody[i].body)-5 && line2 < size(methodBody[j].body)-5) {
 					if (methodBody[i].body[line] in methodBody[j].body && methodBody[i].body[line+5] in methodBody[j].body && (methodBody[i].body[line..line+6] < methodBody[j].body)){
 						
 						//Find the line in method 2 where method1[line] matches, and method1[line+5] also matches (with method2[line2+5]).
@@ -53,9 +52,9 @@ for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
 						if (methodBody[i].body[line..line+6] == methodBody[j].body[line2..line2+6]){
 
 							beggining = line;
-							line +=		6;
-							line2 +=	6;
-							while (line2 < size(methodBody[j].body)-1 && methodBody[i].body[line] == methodBody[j].body[line2] && line < size(methodBody[i].body)-1  ){
+							line +=		5;
+							line2 +=	5;
+							while (line2 < size(methodBody[j].body)-1 && line < size(methodBody[i].body)-1 && methodBody[i].body[line+1] == methodBody[j].body[line2+1]   ){
 								line +=		1;
 								line2 +=	1;
 							}
@@ -63,8 +62,8 @@ for ( int i <- [0..size(methodBody)-1], size(methodBody[i].body)>5 ){
 							//final check to see if everything inbetween our first line and final line exist in method 2. If they do, add lines to result.
 							if (methodBody[i].body[beggining..line] < methodBody[j].body){
 								if ((i==j && line2 != line) || i != j ){
-									result += ((line)-beggining);
-									println("<methodBody[i].body[beggining..line] == methodBody[j].body[((line2)-(line-beggining))..line2]>, Method:<i> with <j>, Lines: <beggining> to <line> with <((line2)-(line-beggining))> to <line2> ");
+									result += ((line+1)-beggining);
+									println("<methodBody[i].body[beggining..line+1] == methodBody[j].body[((line2)-(line-beggining))..line2+1]>, Method:<i> with <j>, Lines: <beggining> to <line+1> with <((line2)-(line-beggining))> to <line2+1> ");
 								}
 							}
 							if(i==j && line+6 < size(methodBody[j].body)-5){ beggining2 = line+6; line2 = beggining2; }
