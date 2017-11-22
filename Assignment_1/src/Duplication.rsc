@@ -99,6 +99,8 @@ CodeProperty computeDuplication(loc project) {
 	datetime stopwatch = now();
 	list[int] duplicationTable = duplicationCheck(project);
 	int duplicatedLines = sum(duplicationTable);
+	methodBody = methodBodies(project);
+	int methodLOC = sum([size(methodBody[i].body) | i <- [0..size(methodBody.body)]]);
 	println("Duplication computed in: <createDuration(stopwatch, now())>");
-	return <"Duplication", [<"ClonedLines", duplicatedLines>, <"LOC", computeTotalLinesOfCode(project)>]>;
+	return <"Duplication", [<"ClonedLines", duplicatedLines>, <"LOC", methodLOC>]>;
 }
