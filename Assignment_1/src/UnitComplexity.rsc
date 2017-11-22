@@ -43,7 +43,7 @@ CodeProperty computeUnitComplexity(loc project) {
 	list[loc] classList = toList(classes(projectModel));
 	list[ClassAst] astsPerClass = [<c, toList(methods(projectModel, c)), createAstFromFile(c, true)> | c <- classList];
 
-	return <"UnitComplexity", [*[<m.uri, computeCyclomaticComplexity(m, c.ast)> | m <- c.methods] | c <- astsPerClass]>;
+	return <"UnitComplexity", <"LOC", computeTotalLinesOfCode(project)> + [*[<m.uri, computeCyclomaticComplexity(m, c.ast)> | m <- c.methods] | c <- astsPerClass]>;
 }
 
 void main() {

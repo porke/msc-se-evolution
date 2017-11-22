@@ -95,6 +95,6 @@ CodeProperty computeDuplication(loc project) {
 	datetime stopwatch = now();
 	list[int] duplicationTable = duplicationCheck(project);
 	int duplicatedLines = sum(duplicationTable);
-	println("Unit size computed in: <createDuration(stopwatch, now())>");
-	return <"Duplication", [<"ClonedLines", duplicatedLines>]>;
+	println("Duplication computed in: <createDuration(stopwatch, now())>");
+	return <"Duplication", [<"ClonedLines", duplicatedLines>, <"LOC", computeTotalLinesOfCode(project)>]>;
 }
