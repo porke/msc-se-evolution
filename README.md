@@ -4,6 +4,8 @@
  - Wojciech Czabanski
  - George Vletsas
 
+## PLEASE NOTE THAT THE FULL VERSION OF THIS REPORT WITH ADDITIONAL INFORMATION IS ATTACHED AS A PDF.
+
 ## General Approach
 
 The general approach is aligned with the EASY paradigm. This means that the modules in the project directly translate to phases in the paradigm.
