@@ -1,7 +1,8 @@
 module Type0_Duplication
 
-import IO;
+import Common;
 
+import IO;
 
 list[tuple[list[str] body, loc name]] methodBodies(loc project){
 	//|project://smallsql0.21/src/smallsql|
