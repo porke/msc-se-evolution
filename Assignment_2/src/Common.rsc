@@ -9,6 +9,11 @@ import String;
 alias Metric = tuple[str name, num val];
 alias CodeProperty = tuple[str name, list[Metric] metrics];
 
+list[str] pruneImportStatements(list[str] lines) {
+	// TODO
+	return lines;
+}
+
 // TODO:  account for this case:
 // codecodecode /* comment
 // * comment some mode
@@ -32,18 +37,18 @@ list[str] pruneMultilineComments(list[str] lines) {
 	}
 }
 
+list[str] getCleanLinesOfCodeFromFile(loc file) {
+	list[str] totalLines = readFileLines(file);
+	list[str] noImports = pruneImportStatements(totalLines);
+	list[str] lines = pruneWhitespaceAndSingleLineComments(noImports);
+	return pruneMultilineComments(lines);
+}
+
 list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
 	return [trim(line) | line <- lines,
 			/^[\s]*$/ !:= line,					// Whitespace lines
 			/^[\s]*[\/]{2,}.*$/ !:= line,		// Single line comments
 			/^[\s]*(\/\*).*(\*\/)[\s]*$/ !:= line ]; // Single line comments with *
-}
-
-int getLinesOfCodeFromLocation(loc file) {
-	list[str] totalLines = readFileLines(file);
-	list[str] lines = pruneWhitespaceAndSingleLineComments(totalLines);
-	list[str] physicalCodeLines = pruneMultilineComments(lines); 
-	return size(physicalCodeLines);
 }
 
 list[loc] getSourceFilesFromDirRecursively(loc directory) {
@@ -56,4 +61,3 @@ int computeTotalLinesOfCode(loc projectLocation) {
 	list[int] linesPerFile = [getLinesOfCodeFromLocation(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
 	return sum(linesPerFile);
 }
-
