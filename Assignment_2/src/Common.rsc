@@ -9,9 +9,8 @@ import String;
 alias Metric = tuple[str name, num val];
 alias CodeProperty = tuple[str name, list[Metric] metrics];
 
-list[str] pruneImportStatements(list[str] lines) {
-	// TODO
-	return lines;
+list[str] pruneImportStatements(list[str] lines) {	
+	return [line | line <- lines, /^import*$/ !:= line, /^package.*$/ !:= line];
 }
 
 // TODO:  account for this case:
@@ -51,13 +50,13 @@ list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
 			/^[\s]*(\/\*).*(\*\/)[\s]*$/ !:= line ]; // Single line comments with *
 }
 
-list[loc] getSourceFilesFromDirRecursively(loc directory) {
-	list[loc] sourceFiles = [directory + s | s <- listEntries(directory), isFile(directory + s)];
-	list[loc] subDirectories = [directory + s | s <- listEntries(directory), isDirectory(directory + s)];	
-	return sourceFiles + [*getSourceFilesFromDirRecursively(d) | d <- subDirectories];
+set[loc] getSourceFilesFromDirRecursively(loc directory) {
+	set[loc] sourceFiles = {directory + s | s <- listEntries(directory), isFile(directory + s)};
+	set[loc] subDirectories = {directory + s | s <- listEntries(directory), isDirectory(directory + s)};	
+	return sourceFiles + {*getSourceFilesFromDirRecursively(d) | d <- subDirectories};
 }
 
 int computeTotalLinesOfCode(loc projectLocation) {
-	list[int] linesPerFile = [getLinesOfCodeFromLocation(s) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
+	list[int] linesPerFile = [size(getCleanLinesOfCodeFromFile(s)) | s <- getSourceFilesFromDirRecursively(projectLocation)];		
 	return sum(linesPerFile);
 }
