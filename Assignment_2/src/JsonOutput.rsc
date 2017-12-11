@@ -29,7 +29,7 @@ void dumpFileDataToJson(loc outputFile, set[File] codeFiles) {
 void dumpReportToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 	appendToFile(outputFile, ",\"report\" : [");
 	map[str, str] reportData = generateReport(classes, codeFiles);
-	writeJsonArray(outputFile, ["{\"<k>\" : \"<reportData[k]>\"}" | k <- reportData]);	
+	writeJsonArray(outputFile, ["{\"attribute\" : \"<k>\", \"value\" : \"<reportData[k]>\"}" | k <- reportData]);	
 	appendToFile(outputFile, "]");
 }
 
