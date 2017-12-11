@@ -6,34 +6,66 @@ import Type1_Duplication;
 
 import IO;
 import List;
+import Map;
+
+int size(map[&T, &T] aMap) {
+	return size([0 | a <- aMap]);
+}
+
+void writeJsonArray(loc outputFile, list[str] items) {
+	for (int item <- [0..size(items)-1]) {
+		appendToFile(outputFile, "<items[item]>,");
+	}
+	appendToFile(outputFile, "<last(items)>");
+}
 
 void dumpFileDataToJson(loc outputFile, set[File] codeFiles) {
-	appendToFile(outputFile, "\"files\" : [");
-	for (File f <- codeFiles) {
-		appendToFile(outputFile, "{\"<f.location>\" : \"<size(f.lines)>\"}, ");
-	}
-	appendToFile(outputFile, "{}]");
+	appendToFile(outputFile, "\"files\" : [");	
+	writeJsonArray(outputFile, ["{\"<f.location>\" : \"<size(f.lines)>\"}" | f <- codeFiles]);	
+	appendToFile(outputFile, "]");
 }
 
-void dumpReportToJson(loc outputFile, CloneClasses classes) {
+void dumpReportToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 	appendToFile(outputFile, ",\"report\" : [");
-	map[str, str] reportData = generateReport(classes);
-	for (k <- reportData) {
-		appendToFile(outputFile, "{\"<k>\" : \"<reportData[k]>\"},");
-	}
-	
-	appendToFile(outputFile, "{}]");
+	map[str, str] reportData = generateReport(classes, codeFiles);
+	writeJsonArray(outputFile, ["{\"<k>\" : \"<reportData[k]>\"}" | k <- reportData]);	
+	appendToFile(outputFile, "]");
 }
 
-void dumpCloneClassesToJson(loc outputFile, CloneClasses classes) {
-	// TODO
+void dumpCloneInstancesToJson(loc outputFile, set[CodeFragment] cloneInstances) {
+	appendToFile(outputFile, "\"clone-instances\" : [");
+	writeJsonArray(outputFile, ["{\"file\" : \"<clonedFragment.file.uri>\"," +
+								  "\"start\" : \"<clonedFragment.lines.beginning>\"," +
+								  "\"end\" : \"<clonedFragment.lines.end>\"}" | clonedFragment <- cloneInstances]);
+	appendToFile(outputFile, "]");
+}
+
+void dumpCloneClassesToJson(loc outputFile, CloneClasses classes, set[File] files) {
+	appendToFile(outputFile, ",\"clone-classes\" : [");
+	
+	int classesLeft = JsonOutput::size(classes);	
+	for (CodeFragment clonedFragmentKey <- classes) {
+		list[str] cloneLines = mapCodeFragmentToText(clonedFragmentKey, (f.location : f | f <- files));
+		str cloneString = intercalate("\\r\\n", cloneLines);
+		appendToFile(outputFile, "{\"clone-class\" : {\"clone-text\" : \"<cloneString>\", ");
+		dumpCloneInstancesToJson(outputFile, clonedFragmentKey + classes[clonedFragmentKey]);	
+		
+		classesLeft -= 1;
+		if (classesLeft > 0) {		
+			appendToFile(outputFile, "}},");
+		}
+		else {
+			appendToFile(outputFile, "}}");
+		}
+	}
+	appendToFile(outputFile, "]");
 }
 
 void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 	writeFile(outputFile, "{\"clone-report\" : {");
 	dumpFileDataToJson(outputFile, codeFiles);
-	dumpCloneClassesToJson(outputFile, classes);
-	dumpReportToJson(outputFile, classes);
+	dumpCloneClassesToJson(outputFile, classes, codeFiles);
+	dumpReportToJson(outputFile, classes, codeFiles);
 	appendToFile(outputFile, "}}");
 }
 
@@ -45,5 +77,6 @@ void dumpAllToJsonTest() {
 	loc project = |project://smallTest/src|;
 	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
 	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	dumpAllToJson(|project://Assignment_2_Visualisation/test.json|, (), files);
+	CloneClasses clones = groupClonesByClass(findClones(files));
+	dumpAllToJson(|project://Assignment_2_Visualisation/test.json|, clones, files);
 }
