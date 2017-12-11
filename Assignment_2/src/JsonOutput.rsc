@@ -21,7 +21,8 @@ void writeJsonArray(loc outputFile, list[str] items) {
 
 void dumpFileDataToJson(loc outputFile, set[File] codeFiles) {
 	appendToFile(outputFile, "\"files\" : [");	
-	writeJsonArray(outputFile, ["{\"<f.location>\" : \"<size(f.lines)>\"}" | f <- codeFiles]);	
+	writeJsonArray(outputFile, ["{\"location\" : \"<f.location>\","+
+								"\"size\" : \"<size(f.lines)>\"}" | f <- codeFiles]);	
 	appendToFile(outputFile, "]");
 }
 
@@ -78,5 +79,5 @@ void dumpAllToJsonTest() {
 	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
 	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
 	CloneClasses clones = groupClonesByClass(findClones(files));
-	dumpAllToJson(|project://Assignment_2_Visualisation/test.json|, clones, files);
+	dumpAllToJson(|project://Assignment_2_Visualisation/se-visualisation/src/data.json|, clones, files);
 }
