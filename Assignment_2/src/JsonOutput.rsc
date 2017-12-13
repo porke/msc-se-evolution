@@ -48,15 +48,15 @@ void dumpCloneClassesToJson(loc outputFile, CloneClasses classes, set[File] file
 	for (CodeFragment clonedFragmentKey <- classes) {
 		list[str] cloneLines = mapCodeFragmentToText(clonedFragmentKey, (f.location : f | f <- files));
 		str cloneString = intercalate("\\r\\n", cloneLines);
-		appendToFile(outputFile, "{\"clone-class\" : {\"clone-text\" : \"<cloneString>\", ");
+		appendToFile(outputFile, "{\"clone-text\" : \"<cloneString>\", ");
 		dumpCloneInstancesToJson(outputFile, clonedFragmentKey + classes[clonedFragmentKey]);	
 		
 		classesLeft -= 1;
 		if (classesLeft > 0) {		
-			appendToFile(outputFile, "}},");
+			appendToFile(outputFile, "},");
 		}
 		else {
-			appendToFile(outputFile, "}}");
+			appendToFile(outputFile, "}");
 		}
 	}
 	appendToFile(outputFile, "]");
