@@ -7,10 +7,6 @@ import Relation;
 import Type1_Duplication;
 import Common;
 
-<<<<<<< HEAD
-test bool justTestIt() {
-	return true;
-}
 
 test bool removeSymmetricPairs() {
 	loc file1 = |unknown:///a.java|;
@@ -24,9 +20,6 @@ test bool removeSymmetricPairs() {
 	set[FileComparison] comparison5 = genComparisons({file1, file4});
 	return  (size(comparison) == 3 && size(comparison2) == 1  && size(comparison3) == 3  && size(comparison4) == 0 && size(comparison5) == 0 );
 }
-
-=======
->>>>>>> c108b75a10f74fa491d2348967a5908eac8ec0ec
 
 test bool findClonesInFiles_filesWithOne7LineCloneInstance() {
 	loc defaultLocation = |unknown:///|;

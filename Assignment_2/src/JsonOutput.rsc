@@ -71,7 +71,7 @@ void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 }
 
 ////////////////////////////////////////
-///// Test code
+///// Development testing code
 ////////////////////////////////////////
 
 void dumpAllToJsonTest() {
