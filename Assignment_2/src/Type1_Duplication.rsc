@@ -44,16 +44,17 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 		int clonedLines = 0;
 		int targetLine = 0;
 		while (targetLine < targetFileSize) {
-			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {			
+			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {
+				iprintln("<clonedLines> src: <sourceFile.lines[sourceLine]>, target: <targetFile.lines[targetLine]>");			
 				// Quick filter out segments which have a different ending 
-				if (clonedLines == 1 &&
-					(sourceLine + minSegmentSize >= sourceFileSize
-					|| targetLine + minSegmentSize >= targetFileSize
-					|| sourceFile.lines[sourceLine + minSegmentSize] != targetFile.lines[targetLine + minSegmentSize])) {
+				/*if (clonedLines == 1 &&
+					(sourceLine + minSegmentSize - 1 >= sourceFileSize
+					|| targetLine + minSegmentSize - 1 >= targetFileSize
+					|| sourceFile.lines[sourceLine + minSegmentSize - 1] != targetFile.lines[targetLine + minSegmentSize - 1])) {
 					clonedLines = 0;
 					targetLine = targetLine + minSegmentSize - 1;
 				}
-				else {
+				else*/ {					
 					clonedLines = clonedLines + 1;
 					sourceLine = sourceLine + 1;
 					if (sourceLine >= sourceFileSize) {
