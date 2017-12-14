@@ -110,7 +110,6 @@ class CloneClassEntry extends Component {
 											 .filter((line) => line !== ' ' && line !== '' && line !== '\t')
 											 .map((line) =>
 		{
-			console.log(line);
 			return <div>{line}</div>;
 		});
 			
@@ -143,17 +142,41 @@ class CloneClassList extends Component {
 	}
 }
 
+class ClonedSection extends Component {
+	render() {
+		return <p>Cloned section here!</p>;
+	}
+}
+
 class FileDuplicationEntry extends Component {
 	render() {
-		return (<svg width="100" height="100">
-					<circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
-				</svg>);
+		var cloneInstanceEntry = (<rect y="123" width="120" height="12" fill="green"/>);
+		
+		const pixelsPerLine = 16;
+		const fileEntryWidth = 120;
+		const dividerWidth = 10;
+		
+		var filename = this.props.fileName.substr(this.props.fileName.lastIndexOf('/') + 1);
+		filename = filename.substr(0, filename.length - 1);
+		
+		var translation = "translate(" + (this.props.displayIndex * (fileEntryWidth + dividerWidth)) + ")";
+		return (<g class="sprite" id={this.props.displayIndex} transform={translation} width={fileEntryWidth} height={this.props.fileSize * pixelsPerLine}>
+					<rect width={fileEntryWidth} height={this.props.fileSize * pixelsPerLine} fill="white" stroke="black"/>
+					<rect width={fileEntryWidth} height="24" fill="gray" stroke="black"/>
+					<text x={fileEntryWidth / 2} y="16" text-anchor="middle" font-size="9">{filename}</text>
+						{cloneInstanceEntry}
+				</g>);
 	}
 }
 
 class FileList extends Component {
 	render() {
-		return (<p>Hello, I'm the file list <FileDuplicationEntry/></p>);
+		var files = this.props.files.map((file, index) =>
+		{
+			return <FileDuplicationEntry displayIndex={index} fileName={file["location"]} fileSize={file["size"]}/>;
+		});
+				
+		return (<svg viewBox="-5 -5 600 600">{files}</svg>);
 	}
 }
 
