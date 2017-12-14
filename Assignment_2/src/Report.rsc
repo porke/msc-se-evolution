@@ -23,8 +23,10 @@ int numCloneClasses(CloneClasses clones) {
 	return size(clones);
 }
 
-int largestCloneClass(CloneClasses clones) {	
-	return max({size(c) | c <- range(clones)});
+int largestCloneClass(CloneClasses clones) {
+	// The one additional clone includes the fragment that is being copied
+	// in addition to all the places where it has been copied to
+	return max({size(c) | c <- range(clones)}) + 1;
 }
 
 int largestClone(CloneClasses clones) {
