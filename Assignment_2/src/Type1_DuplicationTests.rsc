@@ -10,11 +10,19 @@ test bool justTestIt() {
 	return true;
 }
 
-// test cases:
-// genComparisons
-//	- empty set
-//  - one symmetric pair getting removed
-//
+test bool removeSymmetricPairs() {
+	loc file1 = |unknown:///a.java|;
+	loc file2 = |unknown:///b.java|;
+	loc file3 = |unknown:///c.java|;
+	loc file4 = |unknown:///a.java|;
+	set[FileComparison] comparison = genComparisons({file1, file2, file3});
+	set[FileComparison] comparison2 = genComparisons({file1, file2, file4});
+	set[FileComparison] comparison3 = genComparisons({file1, file2, file3, file4});
+	set[FileComparison] comparison4 = genComparisons({});
+	set[FileComparison] comparison5 = genComparisons({file1, file4});
+	return  (size(comparison) == 3 && size(comparison2) == 1  && size(comparison3) == 3  && size(comparison4) == 0 && size(comparison5) == 0 );
+}
+
 
 test bool findClonesInFiles_filesWithOne7LineCloneInstance() {
 	loc defaultLocation = |unknown:///|;
