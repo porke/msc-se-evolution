@@ -82,10 +82,16 @@ set[FileComparison] genComparisons(set[loc] files) {
 	set[FileComparison] noIdentComparisons = files*files - ident(files);
 	// Prune symmetric comparisons, if <A, B> is in finalRelation, we don't want <B, A> to be there
 	set[FileComparison] finalRelation = {};	
+	
+	int totalComparisons = size(noIdentComparisons);
+	int currComparison = 0;
 	for (FileComparison element <- noIdentComparisons) {
 		if (element.from notin finalRelation[element.to]) {
 			finalRelation[element.from] = element.to;		
 		}
+		
+		currComparison += 1;
+		println("<currComparison>/<totalComparisons> comparisons computed in: <createDuration(stopwatch, now())>");
 	}
 	println("Comparisons computed in: <createDuration(stopwatch, now())>");
 	return finalRelation;

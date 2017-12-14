@@ -3,4 +3,5 @@
 /hsqldb-2.3.1/
 /.recommenders/
 Assignment_1/src/.project
-Assignment_2_Visualisation/se-visualisation/src/data.json
+Assignment_2_Visualisation/se-visualisation/src/*.json
+

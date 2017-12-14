@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import { Grid, Row, Col, Tabs, Tab, Table, ListGroup, ListGroupItem, Accordion, Panel, Well } from 'react-bootstrap';	
+import { Grid, Row, Col, Tabs, Tab, Table, ListGroup, ListGroupItem, Accordion, Panel } from 'react-bootstrap';	
 
 
 class App extends Component {	
@@ -65,7 +65,14 @@ class FileEntry extends Component {
 
 class FileTable extends Component {
 	render() {
-		const fileEntries = this.props.files.map((attr) =>
+		function compareFiles(a,b) {		  
+		  if (parseInt(a["size"]) < parseInt(b["size"])) return 1;
+		  if (parseInt(a["size"]) > parseInt(b["size"])) return -1;
+		  return 0;
+		}
+		
+		const fileEntries = this.props.files.sort(compareFiles)
+											.map((attr) =>
 		{
 			return <FileEntry key={attr["location"]} filename={attr["location"]} lines={attr["size"]}/>
 		});
@@ -93,21 +100,41 @@ class Report extends Component {
 }
 
 class CloneClassEntry extends Component {
-	render() {
-		const instances = this.props.instances.map((instance) =>
+	render() {						
+		const instances = this.props.instances.map((instance, index) =>
 		{
-			return <ListGroupItem key={instance["clone-text"]}>{instance["file"]} lines:{instance["start"]}-{instance["end"]}</ListGroupItem>
+			return <ListGroupItem key={index}>{instance["file"]} lines:{instance["start"]}-{instance["end"]}</ListGroupItem>
 		});
 		
-		return (<div><Well>{this.props.cloneText}</Well> <ListGroup>{instances}</ListGroup></div>);
+		var cloneLines = this.props.cloneText.split("\r\n")
+											 .filter((line) => line !== ' ' && line !== '' && line !== '\t')
+											 .map((line) =>
+		{
+			console.log(line);
+			return <div>{line}</div>;
+		});
+			
+		return (<div><pre><code>{cloneLines}</code></pre><ListGroup>{instances}</ListGroup></div>);
 	}
 }
 
 class CloneClassList extends Component {	
-	render() {		
-		const cloneClassEntries = this.props.clones.map((clone) =>
+	render() {
+		function compareCloneClasses(a,b) {			
+			var instanceA = a["clone-instances"][0];
+			var instanceB = b["clone-instances"][0];
+			var lengthA = parseInt(instanceA["end"]) - parseInt(instanceA["start"]);
+			var lengthB = parseInt(instanceB["end"]) - parseInt(instanceB["start"]);
+			if (lengthA < lengthB) return 1;
+			if (lengthA > lengthB) return -1;
+			return 0;
+		}
+		
+		const cloneClassEntries = this.props.clones.sort(compareCloneClasses)
+												   .map((clone, index) =>
 		{
-			return <Panel header={"Clone Size: " + clone["clone-text"].length + " characters, Clone Instances: " + clone["clone-instances"].length} eventKey="1">
+			var cloneLines = clone["clone-text"].split("\r\n");			
+			return <Panel key={index} header={"Clone Size: " + cloneLines.length + " lines, Clone Instances: " + clone["clone-instances"].length} eventKey={index}>
 						<CloneClassEntry key={clone["clone-text"]} cloneText={clone["clone-text"]} instances={clone["clone-instances"]}/>
 					</Panel>
 		});
@@ -118,13 +145,15 @@ class CloneClassList extends Component {
 
 class FileDuplicationEntry extends Component {
 	render() {
-		return (<p>Hello, I'm a file duplication entry!</p>);
+		return (<svg width="100" height="100">
+					<circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+				</svg>);
 	}
 }
 
 class FileList extends Component {
 	render() {
-		return (<p>Hello, I'm the file list</p>);
+		return (<p>Hello, I'm the file list <FileDuplicationEntry/></p>);
 	}
 }
 

@@ -7,6 +7,7 @@ import Type1_Duplication;
 import IO;
 import List;
 import Map;
+import String;
 
 int size(map[&T, &T] aMap) {
 	return size([0 | a <- aMap]);
@@ -48,7 +49,7 @@ void dumpCloneClassesToJson(loc outputFile, CloneClasses classes, set[File] file
 	for (CodeFragment clonedFragmentKey <- classes) {
 		list[str] cloneLines = mapCodeFragmentToText(clonedFragmentKey, (f.location : f | f <- files));
 		str cloneString = intercalate("\\r\\n", cloneLines);
-		appendToFile(outputFile, "{\"clone-text\" : \"<cloneString>\", ");
+		appendToFile(outputFile, "{\"clone-text\" : \"<escape(cloneString, ("\"" : "\\\""))>\", ");
 		dumpCloneInstancesToJson(outputFile, clonedFragmentKey + classes[clonedFragmentKey]);	
 		
 		classesLeft -= 1;
@@ -75,7 +76,7 @@ void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 ////////////////////////////////////////
 
 void dumpAllToJsonTest() {
-	loc project = |project://smallTest/src|;
+	loc project = |project://smallsql0.21/src/smallsql|;
 	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
 	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
 	CloneClasses clones = groupClonesByClass(findClones(files));
