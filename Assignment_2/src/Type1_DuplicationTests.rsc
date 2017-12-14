@@ -8,11 +8,6 @@ import Type1_Duplication;
 import Common;
 
 
-test bool justTestIt() {
-	return true;
-}
-
-
 test bool removeSymmetricPairs() {
 	loc file1 = |unknown:///a.java|;
 	loc file2 = |unknown:///b.java|;
