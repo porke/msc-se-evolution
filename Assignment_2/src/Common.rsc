@@ -9,8 +9,8 @@ import String;
 alias Metric = tuple[str name, num val];
 alias CodeProperty = tuple[str name, list[Metric] metrics];
 
-list[str] pruneImportStatements(list[str] lines) {	
-	return [line | line <- lines, /^import*$/ !:= line, /^package.*$/ !:= line];
+list[str] pruneImportPackageStatements(list[str] lines) {	
+	return [line | line <- lines, /^import.*$/ !:= line, /^package.*$/ !:= line];
 }
 
 // TODO:  account for this case:
@@ -27,7 +27,7 @@ list[str] pruneMultilineComments(list[str] lines) {
 			bool isCurrLineCommentEnd = (/^.*(\*\/)[\s]*$/ := line);
 			isComment = !isCurrLineCommentEnd;
 		}
-		else {
+		else {			
 			isComment = (/^[\s]*(\/\*).*$/ := line);
 			if (!isComment) {
 				append trim(line);
@@ -38,7 +38,7 @@ list[str] pruneMultilineComments(list[str] lines) {
 
 list[str] getCleanLinesOfCodeFromFile(loc file) {
 	list[str] totalLines = readFileLines(file);
-	list[str] noImports = pruneImportStatements(totalLines);
+	list[str] noImports = pruneImportPackageStatements(totalLines);
 	list[str] lines = pruneWhitespaceAndSingleLineComments(noImports);
 	return pruneMultilineComments(lines);
 }

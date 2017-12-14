@@ -122,7 +122,7 @@ CloneClasses groupClonesByClass(set[CloneInstance] clones) {
 }
 
 ////////////////////////////////////////
-///// Test code
+///// Development testing code
 ////////////////////////////////////////
 
 void findClonesTest() {

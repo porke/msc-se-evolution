@@ -7,9 +7,12 @@ import Relation;
 import Type1_Duplication;
 import Common;
 
+<<<<<<< HEAD
 test bool justTestIt() {
 	return true;
 }
+=======
+>>>>>>> f98cfb21cd5024821db6b9fff51a6ff3dd602371
 
 test bool removeSymmetricPairs() {
 	loc file1 = |unknown:///a.java|;
