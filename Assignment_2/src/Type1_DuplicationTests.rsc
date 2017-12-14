@@ -2,19 +2,11 @@ module Type1_DuplicationTests
 
 import IO;
 import Set;
+import Relation;
 
 import Type1_Duplication;
 import Common;
 
-test bool justTestIt() {
-	return true;
-}
-
-// test cases:
-// genComparisons
-//	- empty set
-//  - one symmetric pair getting removed
-//
 
 test bool findClonesInFiles_filesWithOne7LineCloneInstance() {
 	loc defaultLocation = |unknown:///|;
@@ -50,6 +42,17 @@ test bool findClonesInFile_duplicationShorterThanTwoMinSegmentSize() {
 	return size(clones) == 0;
 }
 
-// groupClonesByCLass
-//  - two clone instances of the same class, make one class of them
-//  - two clone instances of a different class, make two classes of them
+test bool groupClonesByClass_twoCloneInstancesOfTheSameClass_madeIntoOneClass() {
+	loc file1 = |unknown:///a.java|;
+	loc file2 = |unknown:///b.java|;
+	CodeFragment frag1 = <file1, <1, 17>>;
+	CodeFragment frag2 = <file2, <2, 18>>;
+	CodeFragment frag3 = <file1, <1, 17>>;
+	CodeFragment frag4 = <file2, <7, 32>>;
+	CloneInstance clone1 = <frag1, frag2>;
+	CloneInstance clone2 = <frag3, frag4>;
+	
+	CloneClasses classes = groupClonesByClass({clone1, clone2});
+	set[CodeFragment] cloneExamples = {c | c <- classes};
+	return size(cloneExamples) == 1 && size(classes[getOneFrom(cloneExamples)]) == 2;
+}

@@ -45,7 +45,6 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 		int targetLine = 0;
 		while (targetLine < targetFileSize) {
 			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {
-				iprintln("<clonedLines> src: <sourceFile.lines[sourceLine]>, target: <targetFile.lines[targetLine]>");			
 				// Quick filter out segments which have a different ending 
 				/*if (clonedLines == 1 &&
 					(sourceLine + minSegmentSize - 1 >= sourceFileSize
