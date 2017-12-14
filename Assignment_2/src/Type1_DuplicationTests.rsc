@@ -8,6 +8,11 @@ import Type1_Duplication;
 import Common;
 
 
+test bool justTestIt() {
+	return true;
+}
+
+
 test bool removeSymmetricPairs() {
 	loc file1 = |unknown:///a.java|;
 	loc file2 = |unknown:///b.java|;
@@ -43,8 +48,14 @@ test bool findClonesInFiles_filesWithTwoDuplicatedSegments() {
 												 "private bool m_flag;", "public bool c() {", "float f = 34;", "f /= 2.0f", "float g = Math.sin(f); return g \> 0.5f", "}"]>;
 	File file2 = <defaultLocation, ["class E {", "public void a() {", "int a = 0;", "a++;", "a--", "int b = a + 7;", "}", "}",
 												 "private bool m_flag;", "public bool c() {", "float f = 34;", "f /= 2.0f", "float g = Math.sin(f); return g \> 0.5f", "}"]>;
+	File file3 = <defaultLocation, ["class D {", "public void a() {", "int a = 0;", "a++;", "a--", "int b = a + 7;", "}", "private int m_b;",
+												 "private bool m_flag;", "public bool c() {", "float f = 34;", "f /= 2.0f", "float g = Math.sin(f); return g \> 0.5f", "}"]>;
+	File file4 = <defaultLocation, ["class E {", "private bool m_flag;", "public bool c() {", "float f = 34;", "f /= 2.0f", "float g = Math.sin(f); return g \> 0.5f", "}" ,
+												 "public void a() {", "int a = 0;", "a++;", "a--", "int b = a + 7;", "}", "}"]>;
 	set[CloneInstance] clones = findClonesInFiles(file1, file2);
-	return size(clones) == 2;
+	set[CloneInstance] clones2 = findClonesInFiles(file3, file4);
+	set[CloneInstance] clones3 = findClonesInFiles(file1, file1);
+	return size(clones) == 2 && size(clones2) == 2 && size(clones3) == 1;
 }
 
 test bool findClonesInFile_duplicationShorterThanTwoMinSegmentSize() {
