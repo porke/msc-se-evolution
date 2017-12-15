@@ -71,11 +71,11 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 
 set[CloneInstance] findClones(set[File] files) {
 	set[CloneInstance] clones = {};
-	int filesProcessed = 0;		
 	list[File] fileList = [f | f <- files, size(f.lines) >= minSegmentSize];
 	int fileCount = size(fileList); 
 	int totalComparisons = fileCount * (fileCount - 1) / 2;
 	
+	int filesProcessed = 0;
 	datetime stopwatch = now();
 	for (int sourceFileIdx <- [0..fileCount]) {
 		for (int targetFileIdx <- [(sourceFileIdx+1)..fileCount]) {
@@ -102,32 +102,3 @@ CloneClasses groupClonesByClass(set[CloneInstance] clones) {
 	}
 	return Relation::index(cloneClasses);
 }
-
-////////////////////////////////////////
-///// Development testing code
-////////////////////////////////////////
-
-void findClonesTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	
-	map[loc, File] fileMappings = (f.location : f | f <- files);
-	CloneClasses clones = groupClonesByClass(findClones(files));
-	text(clones);
-}
-
-void findClonesInFilesTest() {
-	loc project = |project://smallTest/src|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	list[File] files = [<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations];
-	iprintln(findClonesInFiles(files[0], files[1]));
-}
-
-void mapSegmentToTextTest() {
-	loc project = |project://smallTest/src|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	list[File] files = [<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations];
-	iprintln(mapSegmentToText(<0, 6>, files[0]));
-}
-

@@ -51,17 +51,3 @@ map[str, str] generateReport(CloneClasses clones, set[File] codeFiles) {
 			"Total duplicated lines" : "<totalDuplicatedLines(clones)>");
 }
 
-
-////////////////////////////////////////
-///// Development testing code
-////////////////////////////////////////
-
-void generateReportTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	
-	map[loc, File] fileMappings = (f.location : f | f <- files);
-	CloneClasses clones = groupClonesByClass(findClones(files));
-	iprintln(generateReport(clones, files));
-}
