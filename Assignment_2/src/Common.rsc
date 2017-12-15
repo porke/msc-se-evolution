@@ -51,7 +51,7 @@ list[str] pruneWhitespaceAndSingleLineComments(list[str] lines) {
 }
 
 set[loc] getSourceFilesFromDirRecursively(loc directory) {
-	set[loc] sourceFiles = {directory + s | s <- listEntries(directory), isFile(directory + s)};
+	set[loc] sourceFiles = {directory + s | s <- listEntries(directory), isFile(directory + s), /^.*(\.java)$/ := s};
 	set[loc] subDirectories = {directory + s | s <- listEntries(directory), isDirectory(directory + s)};	
 	return sourceFiles + {*getSourceFilesFromDirRecursively(d) | d <- subDirectories};
 }

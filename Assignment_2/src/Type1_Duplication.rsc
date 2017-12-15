@@ -45,20 +45,12 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 		int targetLine = 0;
 		while (targetLine < targetFileSize) {
 			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {
-				// Quick filter out segments which have a different ending 
-				/*if (clonedLines == 1 &&
-					(sourceLine + minSegmentSize - 1 >= sourceFileSize
-					|| targetLine + minSegmentSize - 1 >= targetFileSize
-					|| sourceFile.lines[sourceLine + minSegmentSize - 1] != targetFile.lines[targetLine + minSegmentSize - 1])) {
-					clonedLines = 0;
-					targetLine = targetLine + minSegmentSize - 1;
-				}
-				else*/ {					
-					clonedLines = clonedLines + 1;
-					sourceLine = sourceLine + 1;
-					if (sourceLine >= sourceFileSize) {
-						break;
-					}
+				// TODO: if two lines are duplicated, do a quick check line+minSegmentSize
+				// if they are not equal, skip the whole segment
+				clonedLines = clonedLines + 1;
+				sourceLine = sourceLine + 1;
+				if (sourceLine >= sourceFileSize) {
+					break;
 				}				
 			}
 			else {
@@ -77,39 +69,23 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 	return cloneInstances;
 }
 
-set[FileComparison] genComparisons(set[loc] files) {
-	datetime stopwatch = now();
-	set[FileComparison] noIdentComparisons = files*files - ident(files);
-	// Prune symmetric comparisons, if <A, B> is in finalRelation, we don't want <B, A> to be there
-	set[FileComparison] finalRelation = {};	
-	
-	int totalComparisons = size(noIdentComparisons);
-	int currComparison = 0;
-	for (FileComparison element <- noIdentComparisons) {
-		if (element.from notin finalRelation[element.to]) {
-			finalRelation[element.from] = element.to;		
-		}
-		
-		currComparison += 1;
-		println("<currComparison>/<totalComparisons> comparisons computed in: <createDuration(stopwatch, now())>");
-	}
-	println("Comparisons computed in: <createDuration(stopwatch, now())>");
-	return finalRelation;
-}
-
 set[CloneInstance] findClones(set[File] files) {
 	set[CloneInstance] clones = {};
-	set[FileComparison] comparisons = genComparisons(domain(files));
-	int filesProcessed = 0;	
-	map[loc, File] fileLocations = (f.location : f | f <- files);
+	int filesProcessed = 0;		
+	list[File] fileList = [f | f <- files, size(f.lines) >= minSegmentSize];
+	int fileCount = size(fileList); 
+	int totalComparisons = fileCount * (fileCount - 1) / 2;
+	
 	datetime stopwatch = now();
-	for (FileComparison currFiles <- comparisons) {
-		set[CloneInstance] foundClones = findClonesInFiles(fileLocations[currFiles.from], fileLocations[currFiles.to]); 
-		clones = clones + foundClones;
+	for (int sourceFileIdx <- [0..fileCount]) {
+		for (int targetFileIdx <- [(sourceFileIdx+1)..fileCount]) {
+			set[CloneInstance] foundClones = findClonesInFiles(fileList[sourceFileIdx], fileList[targetFileIdx]); 
+			clones = clones + foundClones;
 		
-		filesProcessed = filesProcessed + 1;		
-		println("Processing <filesProcessed>/<size(comparisons)> for <createDuration(stopwatch, now())>. Comparing: <currFiles.from.file> vs <currFiles.to.file>");
-		
+			filesProcessed = filesProcessed + 1;
+			println("Processing <filesProcessed>/<totalComparisons> for <createDuration(stopwatch, now())>. " +
+				    "Comparing: <fileList[sourceFileIdx].location.file> vs <fileList[targetFileIdx].location.file>");
+		}
 	}
 	return clones;
 }
@@ -139,12 +115,6 @@ void findClonesTest() {
 	map[loc, File] fileMappings = (f.location : f | f <- files);
 	CloneClasses clones = groupClonesByClass(findClones(files));
 	text(clones);
-}
-
-void findClonesFromFileTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	iprintln(genComparisons(fileLocations));
 }
 
 void findClonesInFilesTest() {
