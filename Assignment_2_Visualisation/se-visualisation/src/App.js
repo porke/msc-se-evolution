@@ -9,16 +9,14 @@ class App extends Component {
 		return (	
 		<div className="App">	  
 			<Grid>
-				<Row className="show-grid">
-					<Col sm={1}/>
-					<Col sm={10}>
+				<Row className="show-grid">					
+					<Col xl={14}>
 						<Tabs defaultActiveKey={1} id="uncontrolled-tab-example">							
 							<Tab eventKey={1} title="Report"><Report attributes={this.props.data["clone-report"]["report"]} files={this.props.data["clone-report"]["files"]}/></Tab>
 							<Tab eventKey={2} title="Clone Classes"><CloneClassList clones={this.props.data["clone-report"]["clone-classes"]}/></Tab>						
 							<Tab eventKey={3} title="Files"><FileList clones={this.props.data["clone-report"]["clone-classes"]} files={this.props.data["clone-report"]["files"]}/></Tab>						
 						</Tabs>
-					</Col>
-					<Col sm={1}/>
+					</Col>					
 				</Row>
 			</Grid>
 		</div>
@@ -148,35 +146,49 @@ class ClonedSection extends Component {
 	}
 }
 
+var pixelsPerLine = 2;
+var fileEntryWidth = 120;
+var dividerWidth = 10;
+var headerHeight = 24;
 class FileDuplicationEntry extends Component {
-	render() {
-		var cloneInstanceEntry = (<rect y="123" width="120" height="12" fill="green"/>);
-		
-		const pixelsPerLine = 16;
-		const fileEntryWidth = 120;
-		const dividerWidth = 10;
-		
+	render() {						
+		var cloneInstanceEntries = this.props.cloneSections.map((section) =>
+		{
+			var start = parseInt(section["start"]);
+			var end = parseInt(section["end"]);
+			return (<rect y={headerHeight + start * pixelsPerLine} width={fileEntryWidth} height={(end - start) * pixelsPerLine} fill="green"/>);
+		});
+				
 		var filename = this.props.fileName.substr(this.props.fileName.lastIndexOf('/') + 1);
 		filename = filename.substr(0, filename.length - 1);
 		
-		var translation = "translate(" + (this.props.displayIndex * (fileEntryWidth + dividerWidth)) + ")";
-		return (<g class="sprite" id={this.props.displayIndex} transform={translation} width={fileEntryWidth} height={this.props.fileSize * pixelsPerLine}>
-					<rect width={fileEntryWidth} height={this.props.fileSize * pixelsPerLine} fill="white" stroke="black"/>
-					<rect width={fileEntryWidth} height="24" fill="gray" stroke="black"/>
-					<text x={fileEntryWidth / 2} y="16" text-anchor="middle" font-size="9">{filename}</text>
-						{cloneInstanceEntry}
+		var translation = "translate(" + (this.props.displayIndex * (fileEntryWidth + dividerWidth) + dividerWidth) + ", " + dividerWidth + ")";
+		return (<g id={this.props.displayIndex} transform={translation} width={fileEntryWidth} height={this.props.fileSize * pixelsPerLine}>
+					<rect width={fileEntryWidth} height={headerHeight + this.props.fileSize * pixelsPerLine} fill="white" stroke="black"/>
+					<rect width={fileEntryWidth} height={headerHeight} fill="gray" stroke="black"/>
+					<text x={fileEntryWidth / 2} y="16" textAnchor="middle" fontSize="9">{filename}</text>
+						{cloneInstanceEntries}
 				</g>);
 	}
 }
 
 class FileList extends Component {
 	render() {
-		var files = this.props.files.map((file, index) =>
-		{
-			return <FileDuplicationEntry displayIndex={index} fileName={file["location"]} fileSize={file["size"]}/>;
+		var filesWithDuplications = this.props.files.filter(file => file["clone-sections"].length > 0);		
+		var files = filesWithDuplications.map((file, index) =>
+		{			
+			return <FileDuplicationEntry key={file["location"]} displayIndex={index} fileName={file["location"]} fileSize={file["size"]} cloneSections={file["clone-sections"]}/>;
 		});
-				
-		return (<svg viewBox="-5 -5 600 600">{files}</svg>);
+
+		var longestFile = filesWithDuplications.reduce((l, r) => 
+		{
+			if (parseInt(l["size"]) < parseInt(r["size"])) return r;
+			if (parseInt(l["size"]) > parseInt(r["size"])) return l;
+			return null;
+		});
+		var fileCount = filesWithDuplications.length;
+		
+		return (<div class="scroller"><svg width={fileEntryWidth * fileCount + dividerWidth * (fileCount + 1)} height={2 * headerHeight + pixelsPerLine * parseInt(longestFile["size"])}>{files}</svg></div>);
 	}
 }
 
