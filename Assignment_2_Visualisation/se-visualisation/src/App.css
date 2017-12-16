@@ -20,3 +20,7 @@
   border:2px solid #000;
   overflow: scroll;
 }
+
+.popover{
+    max-width: 100%; /* Max Width of the popover (depending on the container!) */
+}

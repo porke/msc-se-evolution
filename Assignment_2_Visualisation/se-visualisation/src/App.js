@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import { Grid, Row, Col, Tabs, Tab, Table, ListGroup, ListGroupItem, Accordion, Panel } from 'react-bootstrap';	
+import { Grid, Row, Col, Tabs, Tab, Table, ListGroup, ListGroupItem, Accordion, Panel, Popover, OverlayTrigger } from 'react-bootstrap';	
 
 
 class App extends Component {	
@@ -140,23 +140,36 @@ class CloneClassList extends Component {
 	}
 }
 
-class ClonedSection extends Component {
-	render() {
-		return <p>Cloned section here!</p>;
-	}
-}
-
 var pixelsPerLine = 2;
 var fileEntryWidth = 120;
 var dividerWidth = 10;
 var headerHeight = 24;
+
+class ClonedSection extends Component {
+	render() {
+		var relatedCloneSections = this.props.relatedSections.map(section => 
+		{
+			return (<ListGroupItem>{section["file"] + ", lines: " + section["start"] + "-" + section["end"] }</ListGroupItem>);
+		});
+		
+		const popoverHoverFocus = (
+			<Popover id="popover-trigger-hover-focus" title={"Clones of: " + this.props.file + ", lines: " + this.props.start + "-" + this.props.end}>
+				{relatedCloneSections}
+			</Popover>);
+
+		return (<OverlayTrigger trigger={['hover', 'focus']} placement="bottom" overlay={popoverHoverFocus}>
+					<rect y={headerHeight + this.props.start * pixelsPerLine} width={fileEntryWidth} height={(this.props.end - this.props.start) * pixelsPerLine} fill="green"/>
+				</OverlayTrigger>);
+	}
+}
+
 class FileDuplicationEntry extends Component {
 	render() {						
 		var cloneInstanceEntries = this.props.cloneSections.map((section) =>
 		{
-			var start = parseInt(section["start"]);
+			var startEntry = parseInt(section["start"]);
 			var end = parseInt(section["end"]);
-			return (<rect y={headerHeight + start * pixelsPerLine} width={fileEntryWidth} height={(end - start) * pixelsPerLine} fill="green"/>);
+			return (<ClonedSection start={startEntry} end={end} file={this.props.fileName} relatedSections={section["related-sections"]}/>);
 		});
 				
 		var filename = this.props.fileName.substr(this.props.fileName.lastIndexOf('/') + 1);
