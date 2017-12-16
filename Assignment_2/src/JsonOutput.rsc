@@ -8,38 +8,63 @@ import IO;
 import List;
 import Map;
 import String;
+import Set;
 
 int size(map[&T, &T] aMap) {
 	return size([0 | a <- aMap]);
 }
 
-void writeJsonArray(loc outputFile, list[str] items) {
-	for (int item <- [0..size(items)-1]) {
-		appendToFile(outputFile, "<items[item]>,");
+str serializeJsonArray(list[str] items) {
+	if (items == []) {
+		return "[]";
 	}
-	appendToFile(outputFile, "<last(items)>");
+
+	str outString = "[";
+	for (int item <- [0..size(items)-1]) {
+		outString += "<items[item]>,";
+	}
+	outString += "<last(items)>]";
+	return outString;
 }
 
-void dumpFileDataToJson(loc outputFile, set[File] codeFiles) {
-	appendToFile(outputFile, "\"files\" : [");	
-	writeJsonArray(outputFile, ["{\"location\" : \"<f.location>\","+
-								"\"size\" : \"<size(f.lines)>\"}" | f <- codeFiles]);	
+void dumpFileDataToJson(loc outputFile, set[File] codeFiles, set[ClonedSection] clonedSectionsByFile) {
+	appendToFile(outputFile, "\"files\" : ");
+	
+	int currentFile = 0;
+	int totalFiles = size(codeFiles);
+	appendToFile(outputFile, "[");
+	for (File f <- codeFiles) {
+		set[ClonedSection] clonedSections = {clonedSection | clonedSection <- clonedSectionsByFile, clonedSection.file == f.location};
+		str clonesSectionsString = serializeJsonArray(["{\"start\" : \"<cs.section.lines.beginning>\","+
+													   "\"end\" : \"<cs.section.lines.end>\"," + 
+													   		"\"related-sections\" : <serializeJsonArray(["{\"file\" : \"<rcs.file>\","+
+													   													  "\"start\" : \"<rcs.lines.beginning>\"," +
+																										  "\"end\" : \"<rcs.lines.end>\"}" | rcs <- cs.relatedSections])>}"
+																| cs <- clonedSections]);
+		
+		appendToFile(outputFile, "{\"location\" : \"<f.location>\"," + 
+								  "\"size\" : \"<size(f.lines)>\","+
+								  " \"clone-sections\" : <clonesSectionsString>}");
+		currentFile += 1;
+		if (currentFile < totalFiles) {
+			appendToFile(outputFile, ",");
+		}
+	}
 	appendToFile(outputFile, "]");
 }
 
 void dumpReportToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
-	appendToFile(outputFile, ",\"report\" : [");
+	appendToFile(outputFile, ",\"report\" : ");
 	map[str, str] reportData = generateReport(classes, codeFiles);
-	writeJsonArray(outputFile, ["{\"attribute\" : \"<k>\", \"value\" : \"<reportData[k]>\"}" | k <- reportData]);	
-	appendToFile(outputFile, "]");
+	appendToFile(outputFile, serializeJsonArray(["{\"attribute\" : \"<k>\", \"value\" : \"<reportData[k]>\"}" | k <- reportData]));		
 }
 
 void dumpCloneInstancesToJson(loc outputFile, set[CodeFragment] cloneInstances) {
-	appendToFile(outputFile, "\"clone-instances\" : [");
-	writeJsonArray(outputFile, ["{\"file\" : \"<clonedFragment.file.uri>\"," +
-								  "\"start\" : \"<clonedFragment.lines.beginning>\"," +
-								  "\"end\" : \"<clonedFragment.lines.end>\"}" | clonedFragment <- cloneInstances]);
-	appendToFile(outputFile, "]");
+	appendToFile(outputFile, "\"clone-instances\" : ");
+	str clonedFragments = serializeJsonArray(["{\"file\" : \"<clonedFragment.file.uri>\"," +
+					  				 		  "\"start\" : \"<clonedFragment.lines.beginning>\"," +
+				  							  "\"end\" : \"<clonedFragment.lines.end>\"}" | clonedFragment <- cloneInstances]);
+    appendToFile(outputFile, clonedFragments);	
 }
 
 void dumpCloneClassesToJson(loc outputFile, CloneClasses classes, set[File] files) {
@@ -63,9 +88,9 @@ void dumpCloneClassesToJson(loc outputFile, CloneClasses classes, set[File] file
 	appendToFile(outputFile, "]");
 }
 
-void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
+void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles, set[ClonedSection] clonedSectionsByFile) {
 	writeFile(outputFile, "{\"clone-report\" : {");
-	dumpFileDataToJson(outputFile, codeFiles);
+	dumpFileDataToJson(outputFile, codeFiles, clonedSectionsByFile);
 	dumpCloneClassesToJson(outputFile, classes, codeFiles);
 	dumpReportToJson(outputFile, classes, codeFiles);
 	appendToFile(outputFile, "}}");
@@ -77,10 +102,12 @@ void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles) {
 
 void dumpAllToJsonTest() {
 	//loc project = |project://smallsql0.21/src/smallsql/junit|;
-	//loc project = |project://smallTest/src|;
-	loc project = |project://hsqldb-2.3.1/hsqldb/src/org/hsqldb|;
+	loc project = |project://smallTest/src|;
+	//loc project = |project://hsqldb-2.3.1/hsqldb/src/org/hsqldb|;
 	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
 	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	CloneClasses clones = groupClonesByClass(findClones(files));
-	dumpAllToJson(|project://Assignment_2_Visualisation/se-visualisation/src/data.json|, clones, files);
+	set[CloneInstance] clones = findClones(files);
+	CloneClasses cloneClasses = groupClonesByClass(clones);
+	set[ClonedSection] clonedSectionsByFile = getClonedSections(files, clones);
+	dumpAllToJson(|project://Assignment_2_Visualisation/se-visualisation/src/data.json|, cloneClasses, files, clonedSectionsByFile);
 }

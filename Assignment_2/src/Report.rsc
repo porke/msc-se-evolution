@@ -7,9 +7,6 @@ import Set;
 import Map;
 import List;
 
-import util::ValueUI;
-import IO;
-
 
 set[CodeFragment] allCloneInstances(CloneClasses clones) {
 	return domain(clones) + {*e | e <- range(clones)};
@@ -30,7 +27,7 @@ int largestCloneClass(CloneClasses clones) {
 }
 
 int largestClone(CloneClasses clones) {
-	return max({codeFragmentSize(e) | e <- allCloneInstances(clones)});
+	return max({Type1_Duplication::codeFragmentSize(e) | e <- allCloneInstances(clones)});
 }
 
 int totalLines(set[File] codeFiles) {
@@ -39,7 +36,7 @@ int totalLines(set[File] codeFiles) {
 
 int totalDuplicatedLines(CloneClasses clones) {
 	set[CodeFragment] allClones = allCloneInstances(clones);
-	return sum([codeFragmentSize(codeFragment) | codeFragment <- allClones]);
+	return sum([Type1_Duplication::codeFragmentSize(codeFragment) | codeFragment <- allClones]);
 }
 
 map[str, str] generateReport(CloneClasses clones, set[File] codeFiles) {

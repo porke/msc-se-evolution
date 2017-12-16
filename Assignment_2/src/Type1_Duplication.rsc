@@ -15,6 +15,7 @@ alias Segment = tuple[int beginning, int end];
 alias CodeFragment = tuple[loc file, Segment lines];
 alias CloneInstance = tuple[CodeFragment source, CodeFragment target];
 alias CloneClasses = map[CodeFragment, set[CodeFragment]];
+alias ClonedSection = tuple[loc file, CodeFragment section, set[CodeFragment] relatedSections];
 
 int minSegmentSize = 6;
 
@@ -88,6 +89,21 @@ set[CloneInstance] findClones(set[File] files) {
 		}
 	}
 	return clones;
+}
+
+set[ClonedSection] getClonedSections(set[File] files, set[CloneInstance] clones) {
+	set[ClonedSection] sections = {};
+	for (File file <- files) {
+		set[CloneInstance] relatedSourceClones = {s | s <- clones, s.source.file == file.location};
+		set[CloneInstance] relatedTargetClones = {s | s <- clones, s.target.file == file.location};
+		set[CloneInstance] allRelatedClones = relatedSourceClones + invert(relatedTargetClones); 
+		
+		CloneClasses classesInFile = groupClonesByClass(allRelatedClones);		
+		for (CodeFragment clonedSection <- classesInFile) {
+			sections = sections + <file.location, clonedSection, classesInFile[clonedSection]>;			
+		}
+	}
+	return sections;	
 }
 
 CloneClasses groupClonesByClass(set[CloneInstance] clones) {
