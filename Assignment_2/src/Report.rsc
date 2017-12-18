@@ -7,9 +7,6 @@ import Set;
 import Map;
 import List;
 
-import util::ValueUI;
-import IO;
-
 
 set[CodeFragment] allCloneInstances(CloneClasses clones) {
 	return domain(clones) + {*e | e <- range(clones)};
@@ -23,12 +20,14 @@ int numCloneClasses(CloneClasses clones) {
 	return size(clones);
 }
 
-int largestCloneClass(CloneClasses clones) {	
-	return max({size(c) | c <- range(clones)});
+int largestCloneClass(CloneClasses clones) {
+	// The one additional clone includes the fragment that is being copied
+	// in addition to all the places where it has been copied to
+	return max({size(c) | c <- range(clones)}) + 1;
 }
 
 int largestClone(CloneClasses clones) {
-	return max({codeFragmentSize(e) | e <- allCloneInstances(clones)});
+	return max({Type1_Duplication::codeFragmentSize(e) | e <- allCloneInstances(clones)});
 }
 
 int totalLines(set[File] codeFiles) {
@@ -37,7 +36,7 @@ int totalLines(set[File] codeFiles) {
 
 int totalDuplicatedLines(CloneClasses clones) {
 	set[CodeFragment] allClones = allCloneInstances(clones);
-	return sum([codeFragmentSize(codeFragment) | codeFragment <- allClones]);
+	return sum([Type1_Duplication::codeFragmentSize(codeFragment) | codeFragment <- allClones]);
 }
 
 map[str, str] generateReport(CloneClasses clones, set[File] codeFiles) {
@@ -49,17 +48,3 @@ map[str, str] generateReport(CloneClasses clones, set[File] codeFiles) {
 			"Total duplicated lines" : "<totalDuplicatedLines(clones)>");
 }
 
-
-////////////////////////////////////////
-///// Test code
-////////////////////////////////////////
-
-void generateReportTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	
-	map[loc, File] fileMappings = (f.location : f | f <- files);
-	CloneClasses clones = groupClonesByClass(findClones(files));
-	iprintln(generateReport(clones, files));
-}

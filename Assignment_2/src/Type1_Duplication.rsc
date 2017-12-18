@@ -15,6 +15,7 @@ alias Segment = tuple[int beginning, int end];
 alias CodeFragment = tuple[loc file, Segment lines];
 alias CloneInstance = tuple[CodeFragment source, CodeFragment target];
 alias CloneClasses = map[CodeFragment, set[CodeFragment]];
+alias ClonedSection = tuple[loc file, CodeFragment section, set[CodeFragment] relatedSections];
 
 int minSegmentSize = 6;
 
@@ -44,21 +45,13 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 		int clonedLines = 0;
 		int targetLine = 0;
 		while (targetLine < targetFileSize) {
-			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {			
-				// Quick filter out segments which have a different ending 
-				if (clonedLines == 1 &&
-					(sourceLine + minSegmentSize >= sourceFileSize
-					|| targetLine + minSegmentSize >= targetFileSize
-					|| sourceFile.lines[sourceLine + minSegmentSize] != targetFile.lines[targetLine + minSegmentSize])) {
-					clonedLines = 0;
-					targetLine = targetLine + minSegmentSize - 1;
-				}
-				else {
-					clonedLines = clonedLines + 1;
-					sourceLine = sourceLine + 1;
-					if (sourceLine >= sourceFileSize) {
-						break;
-					}
+			if (sourceFile.lines[sourceLine] == targetFile.lines[targetLine]) {
+				// TODO: if two lines are duplicated, do a quick check line+minSegmentSize
+				// if they are not equal, skip the whole segment
+				clonedLines = clonedLines + 1;
+				sourceLine = sourceLine + 1;
+				if (sourceLine >= sourceFileSize) {
+					break;
 				}				
 			}
 			else {
@@ -77,35 +70,40 @@ set[CloneInstance] findClonesInFiles(File sourceFile, File targetFile) {
 	return cloneInstances;
 }
 
-set[FileComparison] genComparisons(set[loc] files) {
-	datetime stopwatch = now();
-	set[FileComparison] noIdentComparisons = files*files - ident(files);
-	// Prune symmetric comparisons, if <A, B> is in finalRelation, we don't want <B, A> to be there
-	set[FileComparison] finalRelation = {};	
-	for (FileComparison element <- noIdentComparisons) {
-		if (element.from notin finalRelation[element.to]) {
-			finalRelation[element.from] = element.to;		
-		}
-	}
-	println("Comparisons computed in: <createDuration(stopwatch, now())>");
-	return finalRelation;
-}
-
 set[CloneInstance] findClones(set[File] files) {
 	set[CloneInstance] clones = {};
-	set[FileComparison] comparisons = genComparisons(domain(files));
-	int filesProcessed = 0;	
-	map[loc, File] fileLocations = (f.location : f | f <- files);
+	list[File] fileList = [f | f <- files, size(f.lines) >= minSegmentSize];
+	int fileCount = size(fileList); 
+	int totalComparisons = fileCount * (fileCount - 1) / 2;
+	
+	int filesProcessed = 0;
 	datetime stopwatch = now();
-	for (FileComparison currFiles <- comparisons) {
-		set[CloneInstance] foundClones = findClonesInFiles(fileLocations[currFiles.from], fileLocations[currFiles.to]); 
-		clones = clones + foundClones;
+	for (int sourceFileIdx <- [0..fileCount]) {
+		for (int targetFileIdx <- [(sourceFileIdx+1)..fileCount]) {
+			set[CloneInstance] foundClones = findClonesInFiles(fileList[sourceFileIdx], fileList[targetFileIdx]); 
+			clones = clones + foundClones;
 		
-		filesProcessed = filesProcessed + 1;		
-		println("Processing <filesProcessed>/<size(comparisons)> for <createDuration(stopwatch, now())>. Comparing: <currFiles.from.file> vs <currFiles.to.file>");
-		
+			filesProcessed = filesProcessed + 1;
+			println("Processing <filesProcessed>/<totalComparisons> for <createDuration(stopwatch, now())>. " +
+				    "Comparing: <fileList[sourceFileIdx].location.file> vs <fileList[targetFileIdx].location.file>");
+		}
 	}
 	return clones;
+}
+
+set[ClonedSection] getClonedSections(set[File] files, set[CloneInstance] clones) {
+	set[ClonedSection] sections = {};
+	for (File file <- files) {
+		set[CloneInstance] relatedSourceClones = {s | s <- clones, s.source.file == file.location};
+		set[CloneInstance] relatedTargetClones = {s | s <- clones, s.target.file == file.location};
+		set[CloneInstance] allRelatedClones = relatedSourceClones + invert(relatedTargetClones); 
+		
+		CloneClasses classesInFile = groupClonesByClass(allRelatedClones);		
+		for (CodeFragment clonedSection <- classesInFile) {
+			sections = sections + <file.location, clonedSection, classesInFile[clonedSection]>;			
+		}
+	}
+	return sections;	
 }
 
 CloneClasses groupClonesByClass(set[CloneInstance] clones) {
@@ -120,38 +118,3 @@ CloneClasses groupClonesByClass(set[CloneInstance] clones) {
 	}
 	return Relation::index(cloneClasses);
 }
-
-////////////////////////////////////////
-///// Test code
-////////////////////////////////////////
-
-void findClonesTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
-	
-	map[loc, File] fileMappings = (f.location : f | f <- files);
-	CloneClasses clones = groupClonesByClass(findClones(files));
-	text(clones);
-}
-
-void findClonesFromFileTest() {
-	loc project = |project://smallsql0.21/src/smallsql/junit|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	iprintln(genComparisons(fileLocations));
-}
-
-void findClonesInFilesTest() {
-	loc project = |project://smallTest/src|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	list[File] files = [<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations];
-	iprintln(findClonesInFiles(files[0], files[1]));
-}
-
-void mapSegmentToTextTest() {
-	loc project = |project://smallTest/src|;
-	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
-	list[File] files = [<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations];
-	iprintln(mapSegmentToText(<0, 6>, files[0]));
-}
-
