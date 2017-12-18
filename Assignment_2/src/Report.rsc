@@ -6,6 +6,7 @@ import Type1_Duplication;
 import Set;
 import Map;
 import List;
+import util::Math;
 
 
 set[CodeFragment] allCloneInstances(CloneClasses clones) {
@@ -40,11 +41,16 @@ int totalDuplicatedLines(CloneClasses clones) {
 }
 
 map[str, str] generateReport(CloneClasses clones, set[File] codeFiles) {
+	int totalLineCount = totalLines(codeFiles);
+	int totalDuplicatedLineCount = totalDuplicatedLines(clones);
+	num duplicationPercentage = round(totalDuplicatedLineCount / toReal(totalLineCount) * 100, 0.1);
+
 	return ("Total clone count" : "<totalCloneCount(clones)>",
 			"Clone class count" : "<numCloneClasses(clones)>",
 			"Largest clone class" : "<largestCloneClass(clones)>",
 			"Largest clone" : "<largestClone(clones)>",
-			"Total lines" : "<totalLines(codeFiles)>",
-			"Total duplicated lines" : "<totalDuplicatedLines(clones)>");
+			"Total lines" : "<totalLineCount>",
+			"Total duplicated lines" : "<totalDuplicatedLineCount>",
+			"Duplication percentage" : "<duplicationPercentage>");
 }
 

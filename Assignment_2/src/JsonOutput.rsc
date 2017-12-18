@@ -102,9 +102,9 @@ void dumpAllToJson(loc outputFile, CloneClasses classes, set[File] codeFiles, se
 
 void dumpAllToJsonTest() {
 	//loc project = |project://smallsql0.21/src/smallsql/junit|;
-	loc project = |project://smallsql0.21/src/smallsql|;
+	//loc project = |project://smallsql0.21/src/smallsql|;
 	//loc project = |project://smallTest/src|;
-	//loc project = |project://hsqldb-2.3.1/hsqldb/src/org/hsqldb|;
+	loc project = |project://hsqldb-2.3.1/hsqldb/src/org/hsqldb|;
 	set[loc] fileLocations = getSourceFilesFromDirRecursively(project);
 	set[File] files = {<f, getCleanLinesOfCodeFromFile(f)> | f <- fileLocations};
 	set[CloneInstance] clones = findClones(files);
